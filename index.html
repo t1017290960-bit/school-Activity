@@ -42,54 +42,61 @@
   <div class="w-full h-full bg-white flex flex-col overflow-hidden relative">
     
     <!-- Header Bar -->
-    <header class="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-20 shadow-xs">
+    <header class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-20 shadow-xs">
       <div class="flex items-center space-x-3">
-        <i class="fa-regular fa-calendar-days text-[#009b9e] text-2xl"></i>
-        <h1 class="text-xl font-bold tracking-tight text-slate-800">每日課外活動</h1>
-        <span id="activity-count-badge" class="text-xs sm:text-sm bg-[#e6f7f7] text-[#009b9e] font-semibold px-3 py-0.5 rounded-full border border-teal-200">
+        <i class="fa-regular fa-calendar-days text-[#009b9e] text-xl"></i>
+        <h1 class="text-lg font-bold tracking-tight text-slate-800">每日課外活動</h1>
+        <span id="activity-count-badge" class="text-xs bg-[#e6f7f7] text-[#009b9e] font-semibold px-2.5 py-0.5 rounded-full border border-teal-200">
           共 14 項
         </span>
       </div>
 
       <div class="flex items-center space-x-2">
-        <button onclick="openAddItemModal()" title="新增活動" class="px-3 py-1.5 rounded-lg border border-teal-200 text-teal-700 bg-teal-50/50 hover:bg-teal-100 transition text-xs sm:text-sm font-medium flex items-center gap-1.5 shadow-2xs">
-          <i class="fa-solid fa-plus text-xs"></i> <span>新增活動</span>
+        <!-- 3-Step Proportional Zoom Controls (等比例放大3級) -->
+        <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold select-none" title="等比例字體畫面縮放 (3段)">
+          <button id="zoom-1-btn" onclick="setZoomLevel(1)" class="px-2 py-1 rounded-md transition bg-white text-[#009b9e] shadow-2xs font-bold">1x</button>
+          <button id="zoom-2-btn" onclick="setZoomLevel(1.3)" class="px-2 py-1 rounded-md transition text-slate-600 hover:text-slate-900">1.3x</button>
+          <button id="zoom-3-btn" onclick="setZoomLevel(1.6)" class="px-2 py-1 rounded-md transition text-slate-600 hover:text-slate-900">1.6x</button>
+        </div>
+
+        <button onclick="openAddItemModal()" title="新增活動" class="px-2.5 py-1 rounded-lg border border-teal-200 text-teal-700 bg-teal-50/60 hover:bg-teal-100 transition text-xs font-medium flex items-center gap-1 shadow-2xs">
+          <i class="fa-solid fa-plus text-[10px]"></i> <span>新增</span>
         </button>
-        <button onclick="resetToDefaultData()" title="重設預設日程" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition text-sm border border-slate-200">
+        <button onclick="resetToDefaultData()" title="重設預設日程" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition text-xs border border-slate-200">
           <i class="fa-solid fa-rotate-right"></i>
         </button>
       </div>
     </header>
 
     <!-- Sub-header Control Strip: Date & Scroll / Filter Controls -->
-    <div class="px-6 py-2.5 bg-slate-50/90 border-b border-slate-100 flex flex-col gap-2 select-none shadow-2xs">
-      <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="px-5 py-2.5 bg-slate-50/90 border-b border-slate-100 flex flex-col gap-2 select-none shadow-2xs">
+      <div class="flex flex-wrap items-center justify-between gap-2">
         <!-- Date Picker Trigger -->
-        <div class="flex items-center space-x-2.5 font-bold text-slate-800 relative group cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
-          <i class="fa-regular fa-calendar text-[#267fe8] text-lg"></i>
-          <input type="date" id="date-input" value="2026-09-22" onchange="onDateChanged(this.value)" class="font-bold text-slate-800 bg-transparent text-sm sm:text-base outline-none cursor-pointer">
+        <div class="flex items-center space-x-2 font-bold text-slate-800 relative group cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+          <i class="fa-regular fa-calendar text-[#267fe8] text-sm"></i>
+          <input type="date" id="date-input" value="2026-09-22" onchange="onDateChanged(this.value)" class="font-bold text-slate-800 bg-transparent text-sm outline-none cursor-pointer">
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex items-center space-x-2 text-xs sm:text-sm font-medium">
+        <div class="flex items-center space-x-1.5 text-xs font-medium">
           <!-- Auto Scroll Button -->
-          <button id="autoscroll-btn" onclick="toggleAutoScroll()" class="px-3.5 py-1.5 rounded-lg font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-2xs">
-            <i id="autoscroll-icon" class="fa-solid fa-play text-[10px] text-amber-600"></i>
-            <span id="autoscroll-text">自動上下滾動</span>
+          <button id="autoscroll-btn" onclick="toggleAutoScroll()" class="px-2.5 py-1 rounded-md font-medium bg-amber-500 text-white border border-amber-500 hover:bg-amber-600 transition flex items-center gap-1 shadow-xs animate-pulse">
+            <i id="autoscroll-icon" class="fa-solid fa-pause text-[9px]"></i>
+            <span id="autoscroll-text">暫停滾動</span>
           </button>
 
           <!-- View All vs Today Filter -->
-          <button id="filter-all-btn" onclick="setFilterMode('all')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-200 border border-transparent transition">
+          <button id="filter-all-btn" onclick="setFilterMode('all')" class="px-2.5 py-1 rounded-md text-slate-600 hover:bg-slate-200 border border-transparent transition">
             顯示全部
           </button>
-          <button id="filter-today-btn" onclick="setFilterMode('today')" class="px-3 py-1.5 rounded-lg bg-[#267fe8] text-white shadow-xs transition font-semibold">
+          <button id="filter-today-btn" onclick="setFilterMode('today')" class="px-2.5 py-1 rounded-md bg-[#267fe8] text-white shadow-xs transition font-semibold">
             本日活動
           </button>
         </div>
       </div>
 
       <!-- Quick Date Select Shortcut Pills -->
-      <div class="flex items-center space-x-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs sm:text-sm">
+      <div class="flex items-center space-x-1.5 overflow-x-auto custom-scrollbar pb-0.5 text-xs font-medium">
         <button onclick="quickSelectDate('2026-09-14')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-14">9/14 (一)</button>
         <button onclick="quickSelectDate('2026-09-15')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-15">9/15 (二)</button>
         <button onclick="quickSelectDate('2026-09-16')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-16">9/16 (三)</button>
@@ -112,15 +119,15 @@
     </main>
 
     <!-- Footer Bar (Exact match: Badges + Hint) -->
-    <footer class="bg-white px-6 py-3.5 border-t border-slate-100 flex items-center justify-between text-sm sm:text-base font-medium text-slate-700 select-none shadow-xs">
+    <footer class="bg-white px-5 py-3 border-t border-slate-100 flex items-center justify-between text-sm font-medium text-slate-700 select-none shadow-xs">
       <div class="flex items-center space-x-5">
         <div class="flex items-center space-x-2">
           <span class="w-2.5 h-4 bg-[#009b9e] rounded-xs"></span>
-          <span class="text-sm text-slate-800">學會</span>
+          <span class="text-sm text-slate-800 font-semibold">學會</span>
         </div>
         <div class="flex items-center space-x-2">
           <span class="w-2.5 h-4 bg-amber-500 rounded-xs"></span>
-          <span class="text-sm text-slate-800">活動</span>
+          <span class="text-sm text-slate-800 font-semibold">活動</span>
         </div>
       </div>
       <span class="text-xs text-slate-400 font-normal">點擊活動可查看或編輯</span>
@@ -460,6 +467,48 @@
     let activities = [];
     let currentDate = "2026-09-22";
     let filterMode = "today"; // 'today' or 'all'
+    let currentZoom = 1; // 1, 1.3, 1.6
+
+    // 等比例放大 3 部 (1x, 1.3x, 1.6x)
+    function setZoomLevel(level) {
+      currentZoom = level;
+      try {
+        if (window.sayoStorage) {
+          window.sayoStorage.setItem("ui_zoom_level", String(level));
+        } else {
+          localStorage.setItem("ui_zoom_level", String(level));
+        }
+      } catch (e) {}
+
+      // Apply proportional zoom to document root / body
+      document.body.style.zoom = level;
+
+      // Update button highlights
+      [1, 1.3, 1.6].forEach(lvl => {
+        const btnId = lvl === 1 ? 'zoom-1-btn' : (lvl === 1.3 ? 'zoom-2-btn' : 'zoom-3-btn');
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        if (Math.abs(lvl - level) < 0.05) {
+          btn.className = "px-2 py-1 rounded-md transition bg-white text-[#009b9e] shadow-2xs font-bold";
+        } else {
+          btn.className = "px-2 py-1 rounded-md transition text-slate-600 hover:text-slate-900";
+        }
+      });
+    }
+
+    async function loadSavedZoom() {
+      try {
+        const saved = window.sayoStorage 
+          ? await window.sayoStorage.getItem("ui_zoom_level")
+          : localStorage.getItem("ui_zoom_level");
+        if (saved) {
+          const val = parseFloat(saved);
+          if (val && [1, 1.3, 1.6].some(v => Math.abs(v - val) < 0.05)) {
+            setZoomLevel(val);
+          }
+        }
+      } catch (e) {}
+    }
 
     // Auto-scroll variables
     let isAutoScrolling = false;
@@ -515,6 +564,11 @@
       }
 
       render();
+      await loadSavedZoom();
+      // 開啟時自動平滑滾動，無需額外手動點擊
+      setTimeout(() => {
+        startAutoScroll();
+      }, 600);
     }
 
     async function persistData() {
@@ -590,7 +644,7 @@
               <div class="w-0.5 bg-slate-200 flex-1 -mt-1 -mb-1"></div>
             </div>
 
-            <!-- Main White Card -->
+            <!-- Main White Card (Original Proportions) -->
             <div class="flex-1 bg-white border border-slate-200/80 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 transition-all flex overflow-hidden">
               <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
                 
@@ -603,7 +657,7 @@
 
                   <!-- Title & Badges -->
                   <div class="flex-1 min-w-0">
-                    <h3 class="text-base sm:text-[17px] font-bold text-slate-800 leading-snug group-hover:text-[#009b9e] transition truncate">
+                    <h3 class="text-base sm:text-[17px] font-bold text-slate-800 leading-snug group-hover:text-[#009b9e] transition">
                       ${escapeHtml(item.name)}
                     </h3>
 
