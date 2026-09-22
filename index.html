@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>eClass 活動點名系統 (跨裝置雲端同步版)</title>
+  <title>每日課外活動日程</title>
   
   <script type="application/json" id="sayo-db-schema">
   {
     "collections": [
       {
-        "name": "activity_sync_records",
-        "label": "Activity Sync Records",
+        "name": "activity_schedule_records",
+        "label": "Daily Activity Records",
         "fields": ["id", "dataJson", "authorUserId", "updatedAt"]
       }
     ]
@@ -18,457 +18,180 @@
   </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- PDF.js CDN for PDF import & text parsing -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  </script>
   <style>
     body {
       -webkit-tap-highlight-color: transparent;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
     }
     .custom-scrollbar::-webkit-scrollbar {
-      width: 4px;
+      width: 5px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
       background: #cbd5e1;
-      border-radius: 4px;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
     }
   </style>
 </head>
-<body class="bg-slate-100 flex justify-center min-h-screen text-slate-800 antialiased selection:bg-blue-100">
+<body class="bg-slate-100 flex justify-center items-center min-h-screen text-slate-800 antialiased selection:bg-teal-100 p-0 sm:p-4">
 
-  <!-- Mobile Frame Container -->
-  <div class="w-full max-w-md bg-white min-h-screen shadow-2xl flex flex-col relative pb-4 select-none">
+  <!-- Main View Card Container (Exact Match to Picture) -->
+  <div class="w-full max-w-md sm:max-w-lg bg-white min-h-screen sm:min-h-0 sm:h-[94vh] sm:rounded-2xl shadow-xl flex flex-col overflow-hidden border border-slate-200/80 relative">
     
     <!-- Header Bar -->
-    <header class="bg-[#267fe8] text-white px-3 py-2.5 flex items-center justify-between shadow-sm relative z-10">
-      <button onclick="togglePage('menu')" class="flex items-center space-x-1 text-white hover:opacity-80 active:scale-95 transition text-base font-normal">
-        <i class="fa-solid fa-chevron-left text-sm"></i>
-        <span>更多</span>
-      </button>
-
-      <div class="flex items-center space-x-1.5">
-        <h1 class="text-lg font-medium tracking-wide">活動點名</h1>
+    <header class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-20">
+      <div class="flex items-center space-x-2.5">
+        <i class="fa-regular fa-calendar-days text-[#009b9e] text-xl"></i>
+        <h1 class="text-lg font-bold tracking-tight text-slate-800">每日課外活動</h1>
+        <span id="activity-count-badge" class="text-xs bg-[#e6f7f7] text-[#009b9e] font-semibold px-2.5 py-0.5 rounded-full border border-teal-200">
+          共 14 項
+        </span>
       </div>
 
-      <div class="flex items-center space-x-1.5">
-        <!-- Cloud Sync Center Button -->
-        <button onclick="openSyncModal()" title="手機與電腦同步" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 active:scale-90 transition">
-          <i class="fa-solid fa-arrows-rotate text-sm"></i>
+      <div class="flex items-center space-x-1">
+        <button onclick="openAddItemModal()" title="新增活動" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-teal-600 hover:bg-slate-100 transition text-sm">
+          <i class="fa-solid fa-plus"></i>
         </button>
-        <!-- PDF Import quick button -->
-        <button onclick="openPdfModal()" title="匯入 PDF / 新增活動" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 active:scale-90 transition">
-          <i class="fa-solid fa-file-arrow-up text-base"></i>
-        </button>
-        <!-- Calendar Popup Trigger -->
-        <button onclick="openScheduleModal()" title="每日課外活動日程" class="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center hover:bg-white/20 active:scale-90 transition shadow-inner">
-          <i class="fa-regular fa-calendar-days text-base"></i>
+        <button onclick="resetToDefaultData()" title="重設預設日程" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition text-sm">
+          <i class="fa-solid fa-rotate-right"></i>
         </button>
       </div>
     </header>
 
-    <!-- Sub-header Segmented Tabs (學會 / 活動) -->
-    <div class="bg-[#267fe8] px-4 pb-3">
-      <div class="bg-black/15 p-0.5 rounded-lg flex text-sm">
-        <button id="tab-club" onclick="setCategory('學會')" class="flex-1 py-1.5 rounded-md font-medium text-center transition bg-white text-[#267fe8] shadow-sm">
-          學會
-        </button>
-        <button id="tab-act" onclick="setCategory('活動')" class="flex-1 py-1.5 rounded-md font-medium text-center transition text-white hover:text-white/90">
-          活動
-        </button>
+    <!-- Sub-header Control Strip: Date & Scroll / Filter Controls -->
+    <div class="px-4 py-2.5 bg-slate-50/80 border-b border-slate-100 flex flex-col gap-2 select-none">
+      <div class="flex items-center justify-between gap-2">
+        <!-- Date Picker Trigger -->
+        <div class="flex items-center space-x-2 font-bold text-slate-800 relative group cursor-pointer">
+          <i class="fa-regular fa-calendar text-[#267fe8] text-base"></i>
+          <input type="date" id="date-input" value="2026-09-22" onchange="onDateChanged(this.value)" class="font-bold text-slate-800 bg-transparent text-sm sm:text-base outline-none cursor-pointer">
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-1.5 text-xs font-medium">
+          <!-- Auto Scroll Button -->
+          <button id="autoscroll-btn" onclick="toggleAutoScroll()" class="px-2.5 py-1 rounded-md font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition flex items-center gap-1 shadow-2xs">
+            <i id="autoscroll-icon" class="fa-solid fa-play text-[9px] text-amber-600"></i>
+            <span id="autoscroll-text">自動上下滾動</span>
+          </button>
+
+          <!-- View All vs Today Filter -->
+          <button id="filter-all-btn" onclick="setFilterMode('all')" class="px-2.5 py-1 rounded-md text-slate-600 hover:bg-slate-200 transition">
+            顯示全部
+          </button>
+          <button id="filter-today-btn" onclick="setFilterMode('today')" class="px-2.5 py-1 rounded-md bg-[#267fe8] text-white shadow-xs transition">
+            本日活動
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Date Select Shortcut Pills -->
+      <div class="flex items-center space-x-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs">
+        <button onclick="quickSelectDate('2026-09-14')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-14">9/14 (一)</button>
+        <button onclick="quickSelectDate('2026-09-15')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-15">9/15 (二)</button>
+        <button onclick="quickSelectDate('2026-09-16')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-16">9/16 (三)</button>
+        <button onclick="quickSelectDate('2026-09-17')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-17">9/17 (四)</button>
+        <button onclick="quickSelectDate('2026-09-18')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-18">9/18 (五)</button>
+        <button onclick="quickSelectDate('2026-09-21')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-21">9/21 (一)</button>
+        <button onclick="quickSelectDate('2026-09-22')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap bg-blue-50 text-[#267fe8] font-semibold border border-blue-200 shadow-2xs" data-date="2026-09-22">9/22 (二)</button>
+        <button onclick="quickSelectDate('2026-09-23')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-23">9/23 (三)</button>
+        <button onclick="quickSelectDate('2026-09-24')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-24">9/24 (四)</button>
+        <button onclick="quickSelectDate('2026-09-25')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-25">9/25 (五)</button>
+        <button onclick="quickSelectDate('2026-09-28')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-28">9/28 (一)</button>
+        <button onclick="quickSelectDate('2026-09-29')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-29">9/29 (二)</button>
+        <button onclick="quickSelectDate('2026-09-30')" class="quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100" data-date="2026-09-30">9/30 (三)</button>
       </div>
     </div>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col bg-white overflow-y-auto custom-scrollbar">
-
-      <!-- Date Row & Sync status banner -->
-      <div class="px-4 py-2 border-b border-slate-100 flex flex-col gap-2 bg-white sticky top-0 z-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <i class="fa-regular fa-calendar text-slate-500 text-base"></i>
-            <input type="date" id="date-picker" onchange="onDateChange(this.value)" class="text-slate-700 font-medium text-sm outline-none bg-transparent cursor-pointer" value="2026-09-22">
-          </div>
-          <div class="flex items-center space-x-1.5">
-            <button onclick="refreshCloudData(true)" title="立即從雲端同步" class="text-xs text-slate-500 hover:text-[#267fe8] p-1.5 rounded-full hover:bg-slate-100 transition">
-              <i class="fa-solid fa-rotate text-xs"></i>
-            </button>
-            <button onclick="openEditItemModal(null)" class="text-xs font-medium text-[#267fe8] bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1">
-              <i class="fa-solid fa-plus text-[10px]"></i> 新增班別
-            </button>
-          </div>
-        </div>
-
-        <!-- Quick Date Shortcuts for September 2026 Calendar -->
-        <div class="flex items-center space-x-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs font-medium text-slate-500">
-          <span class="text-[11px] text-slate-400 whitespace-nowrap"><i class="fa-solid fa-calendar-check text-blue-500 mr-0.5"></i>日期：</span>
-          <button onclick="quickSetDate('2026-09-14')" id="pill-2026-09-14" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/14 (一)</button>
-          <button onclick="quickSetDate('2026-09-15')" id="pill-2026-09-15" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/15 (二)</button>
-          <button onclick="quickSetDate('2026-09-16')" id="pill-2026-09-16" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/16 (三)</button>
-          <button onclick="quickSetDate('2026-09-17')" id="pill-2026-09-17" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/17 (四)</button>
-          <button onclick="quickSetDate('2026-09-18')" id="pill-2026-09-18" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/18 (五)</button>
-          <button onclick="quickSetDate('2026-09-21')" id="pill-2026-09-21" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/21 (一)</button>
-          <button onclick="quickSetDate('2026-09-22')" id="pill-2026-09-22" class="px-2 py-0.5 rounded-full transition whitespace-nowrap bg-blue-50 text-[#267fe8] font-semibold border border-blue-200">9/22 (二)</button>
-          <button onclick="quickSetDate('2026-09-23')" id="pill-2026-09-23" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/23 (三)</button>
-          <button onclick="quickSetDate('2026-09-24')" id="pill-2026-09-24" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/24 (四)</button>
-          <button onclick="quickSetDate('2026-09-25')" id="pill-2026-09-25" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/25 (五)</button>
-          <button onclick="quickSetDate('2026-09-28')" id="pill-2026-09-28" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/28 (一)</button>
-          <button onclick="quickSetDate('2026-09-29')" id="pill-2026-09-29" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/29 (二)</button>
-          <button onclick="quickSetDate('2026-09-30')" id="pill-2026-09-30" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/30 (三)</button>
-        </div>
-      </div>
-
-      <!-- Sync Banner Tip (Shows upon sync or click) -->
-      <div id="sync-banner" class="hidden bg-emerald-50 border-b border-emerald-100 px-4 py-1.5 text-xs text-emerald-700 flex items-center justify-between">
-        <span class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-emerald-500"></i> 手機與電腦資料已最新同步</span>
-        <button onclick="dismissSyncBanner()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <!-- Table Column Headers -->
-      <div class="bg-[#009b9e] text-white px-4 py-2 flex items-center text-sm font-normal tracking-wide">
-        <div class="w-7/12">名稱</div>
-        <div class="w-3/12 text-center">人數</div>
-        <div class="w-2/12 text-right pr-2">狀態</div>
-      </div>
-
-      <!-- Activity Items List -->
-      <div id="activity-list" class="divide-y divide-slate-100">
-        <!-- Injected via JS -->
-      </div>
-
-      <!-- Empty State -->
-      <div id="empty-state" class="hidden flex-col items-center justify-center p-12 text-slate-400">
-        <i class="fa-regular fa-folder-open text-4xl mb-3 text-slate-300"></i>
-        <p class="text-sm">此日期暫無活動記錄</p>
-        <button onclick="openPdfModal()" class="mt-3 text-xs text-[#267fe8] font-medium bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
-          匯入 PDF 課外活動表
-        </button>
-      </div>
-
+    <!-- Timeline Activity Cards Container -->
+    <main id="activity-container" class="flex-1 p-4 sm:p-5 overflow-y-auto custom-scrollbar space-y-3 bg-[#fafbfc]">
+      <!-- Cards rendered dynamically via JS -->
     </main>
 
-    <!-- ==================== POPUP: 手機與電腦同步中心 ==================== -->
-    <div id="sync-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-[2px]">
-      <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-blue-50/70">
-          <div class="flex items-center space-x-2 text-[#267fe8]">
-            <i class="fa-solid fa-rotate text-lg"></i>
-            <h2 class="text-base font-bold">手機與電腦資料同步</h2>
-          </div>
-          <button onclick="closeSyncModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600">
-            <i class="fa-solid fa-xmark text-lg"></i>
-          </button>
+    <!-- Footer Bar (Exact match: Badges + Hint) -->
+    <footer class="bg-white px-5 py-3 border-t border-slate-100 flex items-center justify-between text-sm font-medium text-slate-700 select-none">
+      <div class="flex items-center space-x-5">
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-4 bg-[#009b9e] rounded-xs"></span>
+          <span class="text-sm text-slate-800">學會</span>
         </div>
-
-        <div class="p-5 overflow-y-auto space-y-4 text-xs">
-          <!-- Realtime Cloud Status -->
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="font-semibold text-slate-700">雲端同步狀態</span>
-              <span id="sync-status-badge" class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1">
-                <i class="fa-solid fa-circle text-[6px]"></i> 已連線同步
-              </span>
-            </div>
-            <p class="text-slate-500 text-[11px] leading-relaxed">
-              在此應用中所作的任何新增、刪除、人數修改及點名，均會自動即時儲存至雲端。無論在電腦瀏覽器或手機開啟，只要重新整理或點擊「立即同步」，即可保持最新進度。
-            </p>
-            <div class="pt-1 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-200">
-              <span>最後同步時間：</span>
-              <span id="last-sync-time" class="font-mono text-slate-600">未同步</span>
-            </div>
-            <button onclick="refreshCloudData(true)" class="w-full mt-2 py-2 bg-[#267fe8] text-white rounded-lg font-medium hover:bg-blue-600 transition flex items-center justify-center gap-1.5 shadow-xs">
-              <i class="fa-solid fa-cloud-arrow-down"></i> 立即從雲端拉取最新資料
-            </button>
-          </div>
-
-          <!-- Quick JSON / Code Export & Import Backup -->
-          <div class="border border-slate-200 rounded-xl p-3.5 space-y-3">
-            <h3 class="font-semibold text-slate-700 flex items-center gap-1.5">
-              <i class="fa-solid fa-file-code text-[#009b9e]"></i> 跨裝置備份碼 (離線/手動傳輸)
-            </h3>
-            <p class="text-slate-500 text-[11px]">
-              亦可一鍵複製完整點名資料包，在電腦或手機間透過 WhatsApp / 郵件傳送並匯入：
-            </p>
-            
-            <div class="flex gap-2">
-              <button onclick="copySyncPayload()" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg border border-slate-300 transition flex items-center justify-center gap-1">
-                <i class="fa-regular fa-copy"></i> 複製同步字串
-              </button>
-              <button onclick="downloadJsonFile()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg border border-slate-300 transition">
-                <i class="fa-solid fa-download"></i> 匯出檔案
-              </button>
-            </div>
-
-            <!-- Paste Import -->
-            <div class="pt-1">
-              <textarea id="import-payload-input" rows="2" class="w-full text-[11px] p-2 border border-slate-200 rounded-lg outline-none font-mono" placeholder="貼上從其他裝置複製的同步字串..."></textarea>
-              <button onclick="importSyncPayload()" class="w-full mt-1.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition text-xs">
-                貼上並覆蓋同步
-              </button>
-            </div>
-          </div>
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-4 bg-amber-500 rounded-xs"></span>
+          <span class="text-sm text-slate-800">活動</span>
         </div>
       </div>
-    </div>
-
-    <!-- ==================== POPUP 1: 每日課外活動 日程 ==================== -->
-    <div id="schedule-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-4 hidden backdrop-blur-[2px]">
-      <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
-        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-          <div class="flex items-center space-x-2 text-slate-800">
-            <i class="fa-regular fa-calendar-days text-[#009b9e] text-xl"></i>
-            <h2 class="text-lg font-bold tracking-tight">每日課外活動</h2>
-            <span id="modal-activity-count" class="text-xs bg-teal-50 text-teal-700 border border-teal-200 px-2 py-0.5 rounded-full font-medium ml-1"></span>
-          </div>
-          <button onclick="closeScheduleModal()" class="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
-            <i class="fa-solid fa-xmark text-xl"></i>
-          </button>
-        </div>
-
-        <div class="px-5 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-base text-slate-700">
-          <div class="flex items-center space-x-2 font-medium">
-            <i class="fa-regular fa-calendar text-[#267fe8]"></i>
-            <span id="modal-date-label" class="text-base font-bold text-slate-800">2026-09-22</span>
-          </div>
-          <div class="flex items-center space-x-2 text-xs">
-            <button id="autoscroll-btn" onclick="toggleAutoScroll()" title="啟動/暫停 自動上下平滑滾動" class="px-2.5 py-1 rounded-md font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-2xs">
-              <i id="autoscroll-icon" class="fa-solid fa-play text-[10px]"></i>
-              <span id="autoscroll-text">自動上下滾動</span>
-            </button>
-            <button id="filter-all-btn" onclick="toggleScheduleFilter('all')" class="px-2.5 py-1 rounded-md font-medium text-slate-500 hover:bg-slate-200 transition">顯示全部</button>
-            <button id="filter-today-btn" onclick="toggleScheduleFilter('today')" class="px-2.5 py-1 rounded-md font-medium bg-[#267fe8] text-white shadow-xs">本日活動</button>
-          </div>
-        </div>
-
-        <div id="timeline-list" class="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-3">
-          <!-- Timeline injected via JS -->
-        </div>
-
-        <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 flex items-center justify-between text-sm font-medium text-slate-700">
-          <div class="flex items-center space-x-6">
-            <div class="flex items-center space-x-2">
-              <span class="w-2.5 h-4 bg-[#009b9e] rounded-sm"></span>
-              <span class="text-sm">學會</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="w-2.5 h-4 bg-amber-500 rounded-sm"></span>
-              <span class="text-sm">活動</span>
-            </div>
-          </div>
-          <span class="text-xs text-slate-400">點擊活動可查看或編輯</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== POPUP 2: PDF 匯入與文字解析器 ==================== -->
-    <div id="pdf-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-[2px]">
-      <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-blue-50/60">
-          <div class="flex items-center space-x-2 text-[#267fe8]">
-            <i class="fa-solid fa-file-pdf text-lg"></i>
-            <h2 class="text-base font-bold">匯入 / 編輯活動資料</h2>
-          </div>
-          <button onclick="closePdfModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600">
-            <i class="fa-solid fa-xmark text-lg"></i>
-          </button>
-        </div>
-
-        <div class="p-5 overflow-y-auto space-y-4 text-xs">
-          <!-- PDF upload dropzone -->
-          <div class="border-2 border-dashed border-blue-200 rounded-xl p-4 text-center bg-blue-50/30 hover:bg-blue-50/60 transition cursor-pointer" onclick="document.getElementById('pdf-file-input').click()">
-            <input type="file" id="pdf-file-input" accept="application/pdf" class="hidden" onchange="handlePdfUpload(event)">
-            <i class="fa-solid fa-cloud-arrow-up text-2xl text-[#267fe8] mb-1.5"></i>
-            <p class="font-medium text-slate-700 text-sm">選擇學校活動 PDF 檔案</p>
-            <p class="text-slate-400 mt-1">自動解析活動名稱、時段、地點與人數</p>
-            <span id="pdf-status-text" class="inline-block mt-2 font-mono text-[11px] text-blue-600 font-medium"></span>
-          </div>
-
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">或直接貼上課外活動列表 (每行一筆)：</label>
-            <textarea id="quick-text-input" rows="4" class="w-full text-xs p-2.5 border border-slate-200 rounded-lg outline-none focus:border-[#267fe8] font-mono leading-relaxed" placeholder="大小肌訓練班 (14:40 - 15:40) 8/8 402&#10;無火煮食初班 (14:40 - 15:40) 7/7 403"></textarea>
-          </div>
-
-          <div class="flex items-center justify-between text-slate-500">
-            <span>預設分配分類：</span>
-            <div class="flex space-x-2">
-              <label class="flex items-center space-x-1 cursor-pointer">
-                <input type="radio" name="import-cat" value="學會" checked> <span>學會</span>
-              </label>
-              <label class="flex items-center space-x-1 cursor-pointer">
-                <input type="radio" name="import-cat" value="活動"> <span>活動</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="pt-2 flex gap-2">
-            <button onclick="parseQuickTextInput()" class="flex-1 py-2.5 bg-[#267fe8] text-white rounded-lg font-medium hover:bg-blue-600 transition shadow-sm">
-              匯入並套用 (自動同步)
-            </button>
-            <button onclick="resetDefaultData()" class="px-3 py-2.5 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition">
-              重設範例
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== POPUP 3: 單項活動編輯 / 點名狀態更改 ==================== -->
-    <div id="edit-item-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-[2px]">
-      <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-          <h3 id="edit-modal-title" class="text-base font-bold text-slate-800">編輯活動資料</h3>
-          <button onclick="closeEditItemModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600">
-            <i class="fa-solid fa-xmark text-lg"></i>
-          </button>
-        </div>
-
-        <form id="edit-form" onsubmit="saveItem(event)" class="p-5 space-y-3 text-xs overflow-y-auto">
-          <input type="hidden" id="item-id">
-          
-          <div>
-            <label class="block text-slate-600 font-medium mb-1">活動名稱</label>
-            <input type="text" id="item-name" required class="w-full p-2 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-[#267fe8]">
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-slate-600 font-medium mb-1">開始時間</label>
-              <input type="time" id="item-start-time" value="14:40" required class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none">
-            </div>
-            <div>
-              <label class="block text-slate-600 font-medium mb-1">結束時間</label>
-              <input type="time" id="item-end-time" value="15:40" required class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-slate-600 font-medium mb-1">地點 / 課室</label>
-              <input type="text" id="item-room" placeholder="例如: 403 / 禮堂" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none">
-            </div>
-            <div>
-              <label class="block text-slate-600 font-medium mb-1">分類</label>
-              <select id="item-category" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none bg-white">
-                <option value="學會">學會</option>
-                <option value="活動">活動</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-slate-600 font-medium mb-1">已到 / 總人數</label>
-              <div class="flex items-center space-x-1">
-                <input type="number" id="item-present" min="0" class="w-full p-2 border border-slate-200 rounded-lg text-sm text-center font-medium" value="8">
-                <span class="text-slate-400">/</span>
-                <input type="number" id="item-total" min="1" class="w-full p-2 border border-slate-200 rounded-lg text-sm text-center font-medium" value="8">
-              </div>
-            </div>
-            <div>
-              <label class="block text-slate-600 font-medium mb-1">點名狀態</label>
-              <select id="item-status" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none bg-white">
-                <option value="已點名">已點名 (綠色)</option>
-                <option value="未點名">未點名 (灰色)</option>
-                <option value="進行中">進行中</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Submit Buttons -->
-          <div class="pt-3 flex space-x-2">
-            <button type="button" onclick="deleteCurrentItem()" id="delete-btn" class="px-3 py-2 text-rose-500 hover:bg-rose-50 rounded-lg transition border border-rose-200 font-medium">
-              刪除
-            </button>
-            <button type="submit" class="flex-1 py-2.5 bg-[#267fe8] text-white rounded-lg font-medium hover:bg-blue-600 transition shadow-sm text-sm">
-              儲存並同步
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- ==================== POPUP 4: "更多" 選單頁 ==================== -->
-    <div id="menu-page" class="absolute inset-0 bg-[#f4f5f9] z-30 flex flex-col hidden overflow-y-auto">
-      <div class="bg-[#267fe8] text-white py-3.5 px-4 flex items-center justify-between shadow-sm">
-        <button onclick="togglePage('attendance')" class="text-white flex items-center gap-1 text-sm hover:opacity-80">
-          <i class="fa-solid fa-chevron-left text-xs"></i> 返回點名
-        </button>
-        <span class="text-base font-medium">更多</span>
-        <div class="w-12"></div>
-      </div>
-
-      <!-- Menu Items List -->
-      <div class="bg-white divide-y divide-slate-100 text-sm mt-0 shadow-sm">
-        
-        <div onclick="openSyncModal()" class="flex items-center justify-between px-4 py-3.5 bg-blue-50/30 hover:bg-blue-50 transition cursor-pointer">
-          <div class="flex items-center space-x-3.5">
-            <div class="w-6 text-center text-blue-600 text-lg"><i class="fa-solid fa-arrows-rotate"></i></div>
-            <div>
-              <span class="text-slate-900 font-medium text-base">手機 / 電腦雲端同步</span>
-              <p class="text-xs text-slate-400">查看跨裝置連線狀態與備份</p>
-            </div>
-          </div>
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
-            <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition cursor-pointer">
-          <div class="flex items-center space-x-3.5">
-            <div class="w-6 text-center text-amber-500 text-lg"><i class="fa-solid fa-bullhorn"></i></div>
-            <span class="text-slate-800 text-base">學校宣布</span>
-          </div>
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
-            <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition cursor-pointer">
-          <div class="flex items-center space-x-3.5">
-            <div class="w-6 text-center text-rose-500 text-lg"><i class="fa-regular fa-calendar-days"></i></div>
-            <span class="text-slate-800 text-base">校曆表</span>
-          </div>
-          <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
-        </div>
-
-        <div class="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition cursor-pointer">
-          <div class="flex items-center space-x-3.5">
-            <div class="w-6 text-center text-blue-500 text-lg"><i class="fa-solid fa-calendar-check"></i></div>
-            <span class="text-slate-800 text-base">職員考勤</span>
-          </div>
-          <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
-        </div>
-
-        <!-- Highlighted Activity Attendance Item -->
-        <div onclick="togglePage('attendance')" class="flex items-center justify-between px-4 py-3.5 bg-blue-50/60 hover:bg-blue-50 transition cursor-pointer">
-          <div class="flex items-center space-x-3.5">
-            <div class="w-6 text-center text-pink-500 text-lg"><i class="fa-solid fa-table-tennis-paddle-ball"></i></div>
-            <span class="text-slate-900 font-medium text-base">活動點名</span>
-          </div>
-          <i class="fa-solid fa-chevron-right text-[#267fe8] text-xs"></i>
-        </div>
-
-        <div class="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition cursor-pointer">
-          <div class="flex items-center space-x-3.5">
-            <div class="w-6 text-center text-emerald-500 text-lg"><i class="fa-solid fa-clipboard-user"></i></div>
-            <span class="text-slate-800 text-base">學生目錄</span>
-          </div>
-          <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
-        </div>
-      </div>
-    </div>
+      <span class="text-xs text-slate-400 font-normal">點擊活動可查看或編輯</span>
+    </footer>
 
   </div>
 
-  <!-- Javascript Logic -->
+  <!-- Modal: View / Edit Activity Detail -->
+  <div id="item-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden backdrop-blur-[2px]">
+    <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col border border-slate-100 animate-in fade-in duration-150">
+      <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <h3 id="modal-title" class="text-base font-bold text-slate-800">活動資料</h3>
+        <button onclick="closeItemModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="item-form" onsubmit="saveActivity(event)" class="p-5 space-y-3 text-xs">
+        <input type="hidden" id="edit-id">
+
+        <div>
+          <label class="block text-slate-600 font-medium mb-1">活動名稱</label>
+          <input type="text" id="edit-name" required class="w-full p-2 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:border-[#009b9e]">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-600 font-medium mb-1">開始時間</label>
+            <input type="time" id="edit-start" required class="w-full p-2 border border-slate-200 rounded-lg text-sm font-mono outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-600 font-medium mb-1">結束時間</label>
+            <input type="time" id="edit-end" required class="w-full p-2 border border-slate-200 rounded-lg text-sm font-mono outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-600 font-medium mb-1">地點 / 課室</label>
+            <input type="text" id="edit-room" placeholder="例如: 601" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-600 font-medium mb-1">分類標籤</label>
+            <select id="edit-category" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none bg-white font-medium">
+              <option value="學會">學會 (青綠色條)</option>
+              <option value="活動">活動 (黃橙色條)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-600 font-medium mb-1">所屬日期</label>
+          <input type="date" id="edit-date" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none bg-white">
+        </div>
+
+        <div class="pt-3 flex space-x-2">
+          <button type="button" onclick="deleteCurrentActivity()" id="delete-btn" class="px-3.5 py-2 text-rose-500 hover:bg-rose-50 rounded-lg transition border border-rose-200 font-medium">
+            刪除
+          </button>
+          <button type="submit" class="flex-1 py-2 bg-[#009b9e] text-white rounded-lg font-bold hover:bg-teal-700 transition shadow-xs text-sm">
+            儲存活動
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Implementation -->
   <script>
-    // Raw calendar data parsed directly from calendar_view.csv
-    const RAW_CALENDAR_CSV = `
+    // 九月 2026 完整課外活動日程 (解析自校曆表 calendar_view.csv)
+    const RAW_CALENDAR_TEXT = `
 2026-09-06
 13:30 - 17:30 <香港國際慈善論壇> 開幕表演生 (3/F音樂室)
 
@@ -687,444 +410,273 @@
 15:30 - 17:30 田徑隊 (雨天操場/跑道/運動場)
 `;
 
-    function parseCalendarCsv(rawText) {
-      const lines = rawText.split('\n');
+    function parseCalendar(text) {
+      const lines = text.split('\n');
       let curDate = '';
-      const result = [];
-      let counter = 1;
+      const list = [];
+      let c = 1;
 
-      for (let rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line) continue;
-        if (/^\d{4}-\d{2}-\d{2}$/.test(line)) {
-          curDate = line;
+      for (let raw of lines) {
+        const l = raw.trim();
+        if (!l) continue;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(l)) {
+          curDate = l;
           continue;
         }
         if (!curDate) continue;
 
-        const timeMatch = line.match(/^(\d{1,2}:\d{2})\s*[-~至到]\s*(\d{1,2}:\d{2})\s+(.+)$/);
-        if (timeMatch) {
-          const startTime = timeMatch[1].padStart(5, '0');
-          const endTime = timeMatch[2].padStart(5, '0');
-          const rest = timeMatch[3].trim();
+        const m = l.match(/^(\d{1,2}:\d{2})\s*[-~至到]\s*(\d{1,2}:\d{2})\s+(.+)$/);
+        if (m) {
+          const startTime = m[1].padStart(5, '0');
+          const endTime = m[2].padStart(5, '0');
+          const rest = m[3].trim();
 
           let name = rest;
           let room = "課室";
-
-          const roomMatch = rest.match(/^(.*?)(?:\s*\(([^()]+)\))$/);
-          if (roomMatch) {
-            name = roomMatch[1].trim();
-            room = roomMatch[2].trim();
+          const rm = rest.match(/^(.*?)(?:\s*\(([^()]+)\))$/);
+          if (rm) {
+            name = rm[1].trim();
+            room = rm[2].trim();
           }
 
-          const isAct = /(隊|校隊|合唱團|鼓|樂隊|樂動|童軍|紅十字|跳繩|舞|拔尖|Band|精兵|Ambassador|小先鋒)/i.test(name);
+          const isAct = /(隊|校隊|合唱團|鼓|樂隊|樂動|童軍|紅十字|跳繩|舞|拔尖|Band|精兵|Ambassador|小先鋒|表演生)/i.test(name);
 
-          result.push({
-            id: `cal-${curDate}-${counter++}`,
+          list.push({
+            id: `cal-${curDate}-${c++}`,
             date: curDate,
             name: name,
-            category: isAct ? "活動" : "學會",
             startTime: startTime,
             endTime: endTime,
-            timeRange: `${startTime} - ${endTime}`,
             room: room,
-            present: 10,
-            total: 10,
-            status: "已點名"
+            category: isAct ? "活動" : "學會"
           });
         }
       }
-      return result;
+      return list;
     }
 
-    const DEFAULT_DATA = parseCalendarCsv(RAW_CALENDAR_CSV);
+    const INITIAL_ACTIVITIES = parseCalendar(RAW_CALENDAR_TEXT);
+
     let activities = [];
-    let currentCategory = "學會";
     let currentDate = "2026-09-22";
-    let scheduleFilter = "today"; // 'today' or 'all'
-    let lastSyncTimestamp = null;
+    let filterMode = "today"; // 'today' or 'all'
 
-    // Clock
-    function updateClock() {
-      const now = new Date();
-      const hrs = String(now.getHours()).padStart(2, '0');
-      const mins = String(now.getMinutes()).padStart(2, '0');
-      const clockEl = document.getElementById('current-clock');
-      if (clockEl) clockEl.textContent = `${hrs}:${mins}`;
-    }
-    setInterval(updateClock, 30000);
-    updateClock();
+    // Auto-scroll variables
+    let isAutoScrolling = false;
+    let autoScrollInterval = null;
+    let scrollDirection = "down";
+    let scrollPauseTimer = null;
 
-    // Initialize application & storage
-    async function initApp() {
-      setSyncStatus('syncing', '同步中...');
-      let loadedFromCloud = false;
-
-      // 1. Try Cloud sync via platform database
+    async function init() {
+      // 1. Load from platform database if exists
+      let loaded = false;
       if (window.sayoDb && typeof window.sayoDb.getAll === 'function') {
         try {
-          const records = await window.sayoDb.getAll("activity_sync_records");
+          const records = await window.sayoDb.getAll("activity_schedule_records");
           if (Array.isArray(records) && records.length > 0) {
             records.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
-            const latest = records[0];
-            if (latest && latest.dataJson) {
-              const parsed = JSON.parse(latest.dataJson);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                activities = parsed;
-                lastSyncTimestamp = latest.updatedAt || new Date().toISOString();
-                loadedFromCloud = true;
-              }
-            }
-          }
-        } catch (err) {
-          console.warn("Cloud DB fetch note:", err);
-        }
-      }
-
-      // 2. Load latest calendar schedule data
-      if (!loadedFromCloud) {
-        activities = [...DEFAULT_DATA];
-        await saveCloudData(false);
-      } else {
-        // Merge missing dates/activities from calendar into activities
-        const existingKeys = new Set(activities.map(a => `${a.date}-${a.name}`));
-        const missing = DEFAULT_DATA.filter(d => !existingKeys.has(`${d.date}-${d.name}`));
-        if (missing.length > 0) {
-          activities = [...activities, ...missing];
-          await saveCloudData(false);
-        }
-      }
-
-      setSyncStatus('success', '已同步');
-      updateSyncTimeUI();
-      renderList();
-    }
-
-    // Save data both locally and to Cloud database
-    async function saveCloudData(showBanner = true) {
-      setSyncStatus('syncing', '正在同步...');
-
-      // 1. Save local
-      try {
-        const jsonStr = JSON.stringify(activities);
-        if (window.sayoStorage) {
-          await window.sayoStorage.setItem("eclass_activities_data", jsonStr);
-        } else {
-          localStorage.setItem("eclass_activities_data", jsonStr);
-        }
-      } catch (err) {
-        console.error("Local save error:", err);
-      }
-
-      // 2. Save Cloud Database
-      if (window.sayoDb && typeof window.sayoDb.append === 'function') {
-        try {
-          let authorId = "device-user";
-          if (typeof window.sayoDb.getUserId === 'function') {
-            try { authorId = await window.sayoDb.getUserId(); } catch (e) {}
-          }
-          const nowIso = new Date().toISOString();
-          const writeRes = await window.sayoDb.append("activity_sync_records", {
-            id: 'sync-' + Date.now(),
-            dataJson: JSON.stringify(activities),
-            authorUserId: authorId,
-            updatedAt: nowIso
-          });
-
-          if (writeRes && writeRes.ok) {
-            lastSyncTimestamp = nowIso;
-            setSyncStatus('success', '已同步');
-          } else {
-            setSyncStatus('saved-local', '本機已儲存');
-          }
-        } catch (dbErr) {
-          console.warn("Cloud write error:", dbErr);
-          setSyncStatus('saved-local', '本機已儲存');
-        }
-      } else {
-        lastSyncTimestamp = new Date().toISOString();
-        setSyncStatus('saved-local', '已儲存');
-      }
-
-      updateSyncTimeUI();
-      if (showBanner) showSyncBanner();
-    }
-
-    // Pull newest data from Cloud
-    async function refreshCloudData(alertOnDone = false) {
-      setSyncStatus('syncing', '正在讀取最新資料...');
-      let updated = false;
-
-      if (window.sayoDb && typeof window.sayoDb.getAll === 'function') {
-        try {
-          const records = await window.sayoDb.getAll("activity_sync_records");
-          if (Array.isArray(records) && records.length > 0) {
-            records.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
-            const latest = records[0];
-            if (latest && latest.dataJson) {
-              const parsed = JSON.parse(latest.dataJson);
-              if (Array.isArray(parsed)) {
-                activities = parsed;
-                lastSyncTimestamp = latest.updatedAt || new Date().toISOString();
-                updated = true;
-                if (window.sayoStorage) {
-                  await window.sayoStorage.setItem("eclass_activities_data", JSON.stringify(activities));
-                }
-              }
+            if (records[0]?.dataJson) {
+              activities = JSON.parse(records[0].dataJson);
+              loaded = true;
             }
           }
         } catch (e) {
-          console.error("Refresh error:", e);
+          console.warn("DB load error:", e);
         }
       }
 
-      setSyncStatus('success', '已同步');
-      updateSyncTimeUI();
-      renderList();
-      showSyncBanner();
-
-      if (alertOnDone) {
-        alert(updated ? "已成功從雲端同步最新活動點名資料！" : "目前資料已是最新狀態。");
-      }
-    }
-
-    function setSyncStatus(state, label) {
-      const icon = document.getElementById('sync-icon');
-      const text = document.getElementById('sync-text');
-      const badge = document.getElementById('sync-status-badge');
-
-      if (!text || !icon) return;
-      text.textContent = label;
-
-      if (state === 'syncing') {
-        icon.className = "fa-solid fa-arrows-rotate fa-spin";
-        if (badge) badge.className = "px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-700 flex items-center gap-1";
-      } else if (state === 'success') {
-        icon.className = "fa-solid fa-cloud";
-        if (badge) {
-          badge.className = "px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1";
-          badge.innerHTML = `<i class="fa-solid fa-circle text-[6px]"></i> 雲端已同步`;
+      // 2. Fallback to Local Storage or Defaults (Auto merge calendar dates)
+      if (!loaded) {
+        try {
+          const stored = window.sayoStorage 
+            ? await window.sayoStorage.getItem("daily_activities") 
+            : localStorage.getItem("daily_activities");
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            // Merge missing dates from calendar if any
+            const existingKeys = new Set(parsed.map(a => `${a.date}-${a.name}`));
+            const missing = INITIAL_ACTIVITIES.filter(a => !existingKeys.has(`${a.date}-${a.name}`));
+            activities = missing.length > 0 ? [...parsed, ...missing] : parsed;
+          } else {
+            activities = [...INITIAL_ACTIVITIES];
+          }
+          await persistData();
+        } catch (e) {
+          activities = [...INITIAL_ACTIVITIES];
         }
       } else {
-        icon.className = "fa-solid fa-hard-drive";
-        if (badge) {
-          badge.className = "px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 text-amber-700 flex items-center gap-1";
-          badge.innerHTML = `<i class="fa-solid fa-circle text-[6px]"></i> 本機儲存`;
+        // Merge missing calendar dates into DB data
+        const existingKeys = new Set(activities.map(a => `${a.date}-${a.name}`));
+        const missing = INITIAL_ACTIVITIES.filter(a => !existingKeys.has(`${a.date}-${a.name}`));
+        if (missing.length > 0) {
+          activities = [...activities, ...missing];
+          await persistData();
         }
       }
+
+      render();
     }
 
-    function updateSyncTimeUI() {
-      const timeEl = document.getElementById('last-sync-time');
-      if (timeEl) {
-        if (!lastSyncTimestamp) {
-          timeEl.textContent = "剛剛";
+    async function persistData() {
+      // Save locally
+      try {
+        const str = JSON.stringify(activities);
+        if (window.sayoStorage) {
+          await window.sayoStorage.setItem("daily_activities", str);
         } else {
-          const d = new Date(lastSyncTimestamp);
-          timeEl.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          localStorage.setItem("daily_activities", str);
+        }
+      } catch (e) {}
+
+      // Save to platform database for teacher review / cross-device sync
+      if (window.sayoDb && typeof window.sayoDb.append === 'function') {
+        try {
+          let authorId = "teacher";
+          if (typeof window.sayoDb.getUserId === 'function') {
+            try { authorId = await window.sayoDb.getUserId(); } catch (e) {}
+          }
+          await window.sayoDb.append("activity_schedule_records", {
+            id: 'sync-' + Date.now(),
+            dataJson: JSON.stringify(activities),
+            authorUserId: authorId,
+            updatedAt: new Date().toISOString()
+          });
+        } catch (e) {
+          console.warn("Cloud save note:", e);
         }
       }
     }
 
-    function showSyncBanner() {
-      const banner = document.getElementById('sync-banner');
-      if (banner) {
-        banner.classList.remove('hidden');
-        setTimeout(() => { banner.classList.add('hidden'); }, 3500);
-      }
-    }
+    function render() {
+      const container = document.getElementById('activity-container');
+      const badge = document.getElementById('activity-count-badge');
 
-    function dismissSyncBanner() {
-      const banner = document.getElementById('sync-banner');
-      if (banner) banner.classList.add('hidden');
-    }
-
-    // Toggle categories
-    function setCategory(cat) {
-      currentCategory = cat;
-      const clubTab = document.getElementById('tab-club');
-      const actTab = document.getElementById('tab-act');
-
-      if (cat === "學會") {
-        clubTab.className = "flex-1 py-1.5 rounded-md font-medium text-center transition bg-white text-[#267fe8] shadow-sm";
-        actTab.className = "flex-1 py-1.5 rounded-md font-medium text-center transition text-white hover:text-white/90";
+      let filtered = [];
+      if (filterMode === "today") {
+        filtered = activities.filter(a => a.date === currentDate);
       } else {
-        actTab.className = "flex-1 py-1.5 rounded-md font-medium text-center transition bg-white text-[#267fe8] shadow-sm";
-        clubTab.className = "flex-1 py-1.5 rounded-md font-medium text-center transition text-white hover:text-white/90";
+        filtered = [...activities];
       }
-      renderList();
+
+      // Sort by start time ascending
+      filtered.sort((a, b) => (a.startTime || "00:00").localeCompare(b.startTime || "00:00"));
+
+      badge.textContent = `共 ${filtered.length} 項`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="h-64 flex flex-col items-center justify-center text-slate-400 text-sm">
+            <i class="fa-regular fa-folder-open text-3xl mb-2 text-slate-300"></i>
+            <p>此日期暫無活動記錄</p>
+            <button onclick="openAddItemModal()" class="mt-3 text-xs text-[#009b9e] font-medium bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-200 hover:bg-teal-100 transition">
+              + 新增本日活動
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map((item, index) => {
+        const isClub = item.category === "學會" || !item.category;
+        const barColor = isClub ? 'bg-[#009b9e]' : 'bg-amber-500';
+        const dotColor = isClub ? 'bg-[#009b9e] ring-teal-100' : 'bg-amber-500 ring-amber-100';
+
+        return `
+          <div onclick="openEditItemModal('${item.id}')" class="flex items-stretch space-x-3.5 relative cursor-pointer group">
+            
+            <!-- Left Vertical Timeline Indicator -->
+            <div class="flex flex-col items-center pt-3.5 pl-0.5">
+              <div class="w-3.5 h-3.5 rounded-full ${dotColor} ring-4 z-10 transition-transform group-hover:scale-110 shadow-2xs"></div>
+              <div class="w-0.5 bg-slate-200 flex-1 -mt-1 -mb-1"></div>
+            </div>
+
+            <!-- Main White Card -->
+            <div class="flex-1 bg-white border border-slate-200/80 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 transition-all flex overflow-hidden">
+              <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
+                
+                <div class="flex items-start space-x-4">
+                  <!-- Start & End Time Box -->
+                  <div class="text-sm sm:text-base font-bold text-slate-800 font-mono leading-tight whitespace-nowrap pt-0.5 text-center min-w-[50px]">
+                    <div>${escapeHtml(item.startTime || '15:25')}</div>
+                    <div class="text-slate-400 text-xs font-normal mt-0.5">${escapeHtml(item.endTime || '16:30')}</div>
+                  </div>
+
+                  <!-- Title & Badges -->
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-base sm:text-[17px] font-bold text-slate-800 leading-snug group-hover:text-[#009b9e] transition truncate">
+                      ${escapeHtml(item.name)}
+                    </h3>
+
+                    <!-- Details Row -->
+                    <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 mt-2">
+                      <span class="inline-flex items-center gap-1 text-slate-700 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-200/90 font-mono">
+                        <i class="fa-solid fa-location-dot text-[#009b9e] text-xs"></i>
+                        <span>${escapeHtml(item.room || '課室')}</span>
+                      </span>
+
+                      <span class="inline-flex items-center gap-1 text-slate-400 font-normal font-mono">
+                        <i class="fa-regular fa-clock text-[11px]"></i>
+                        <span>${escapeHtml(item.startTime)} - ${escapeHtml(item.endTime)}</span>
+                      </span>
+
+                      ${filterMode === 'all' && item.date ? `<span class="text-blue-500 font-mono text-[11px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">${item.date}</span>` : ''}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Right Vertical Colored Border Indicator -->
+              <div class="w-2.5 ${barColor} shrink-0 self-stretch rounded-r-xl"></div>
+            </div>
+
+          </div>
+        `;
+      }).join('');
     }
 
-    function onDateChange(val) {
-      currentDate = val;
-      updateQuickPillState(val);
-      renderList();
+    function onDateChanged(newDate) {
+      currentDate = newDate;
+      updateQuickDatePills(newDate);
+      if (filterMode === 'all') {
+        setFilterMode('today');
+      } else {
+        render();
+      }
     }
 
-    function quickSetDate(val) {
-      const picker = document.getElementById('date-picker');
-      if (picker) picker.value = val;
-      onDateChange(val);
+    function quickSelectDate(dateStr) {
+      const picker = document.getElementById('date-input');
+      if (picker) picker.value = dateStr;
+      onDateChanged(dateStr);
     }
 
-    function updateQuickPillState(activeDate) {
-      const dates = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-18', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-28', '2026-09-29', '2026-09-30'];
-      dates.forEach(d => {
-        const el = document.getElementById(`pill-${d}`);
-        if (!el) return;
-        if (d === activeDate) {
-          el.className = "px-2 py-0.5 rounded-full transition whitespace-nowrap bg-blue-50 text-[#267fe8] font-semibold border border-blue-200 shadow-2xs";
+    function updateQuickDatePills(activeDate) {
+      document.querySelectorAll('.quick-date-btn').forEach(btn => {
+        if (btn.getAttribute('data-date') === activeDate) {
+          btn.className = "quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap bg-blue-50 text-[#267fe8] font-semibold border border-blue-200 shadow-2xs";
         } else {
-          el.className = "px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200 text-slate-600";
+          btn.className = "quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100";
         }
       });
     }
 
-    // Render Table
-    function renderList() {
-      const container = document.getElementById('activity-list');
-      const empty = document.getElementById('empty-state');
-      
-      const filtered = activities.filter(a => 
-        (a.category === currentCategory || !a.category) &&
-        (!a.date || a.date === currentDate)
-      );
-
-      if (filtered.length === 0) {
-        container.innerHTML = "";
-        empty.classList.remove('hidden');
-        empty.classList.add('flex');
-        return;
-      }
-
-      empty.classList.add('hidden');
-      empty.classList.remove('flex');
-
-      container.innerHTML = filtered.map(item => `
-        <div onclick="openEditItemModal('${item.id}')" class="flex items-center px-4 py-3.5 hover:bg-slate-50 active:bg-slate-100 transition cursor-pointer">
-          <div class="w-7/12 pr-2">
-            <h3 class="text-[15px] font-normal text-slate-800 leading-snug">${escapeHtml(item.name)}</h3>
-            <p class="text-xs text-slate-400 mt-1 font-sans">(${escapeHtml(item.timeRange || (item.startTime + ' - ' + item.endTime))}) · ${escapeHtml(item.room || '課室')}</p>
-          </div>
-          <div class="w-3/12 flex items-center justify-center space-x-1.5 text-slate-500 text-sm">
-            <i class="fa-solid fa-user text-slate-400 text-xs"></i>
-            <span class="font-medium text-slate-700">${item.present}/${item.total}</span>
-          </div>
-          <div class="w-2/12 flex items-center justify-end space-x-2">
-            <span class="${item.status === '已點名' ? 'text-emerald-600 font-normal' : (item.status === '未點名' ? 'text-slate-400' : 'text-amber-600')} text-sm whitespace-nowrap">
-              ${escapeHtml(item.status || '已點名')}
-            </span>
-            <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // Render Timeline Popup (每日課外活動 - 字體放大、移除人數、一次展現全部活動)
-    function openScheduleModal() {
-      const modal = document.getElementById('schedule-modal');
-      renderScheduleTimeline();
-      modal.classList.remove('hidden');
-    }
-
-    function toggleScheduleFilter(mode) {
-      scheduleFilter = mode;
+    function setFilterMode(mode) {
+      filterMode = mode;
       const todayBtn = document.getElementById('filter-today-btn');
       const allBtn = document.getElementById('filter-all-btn');
 
       if (mode === 'all') {
-        allBtn.className = "px-2.5 py-1 rounded-md font-medium bg-[#267fe8] text-white shadow-xs";
-        todayBtn.className = "px-2.5 py-1 rounded-md font-medium text-slate-500 hover:bg-slate-200 transition";
+        allBtn.className = "px-2.5 py-1 rounded-md bg-[#267fe8] text-white shadow-xs transition";
+        todayBtn.className = "px-2.5 py-1 rounded-md text-slate-600 hover:bg-slate-200 transition";
       } else {
-        todayBtn.className = "px-2.5 py-1 rounded-md font-medium bg-[#267fe8] text-white shadow-xs";
-        allBtn.className = "px-2.5 py-1 rounded-md font-medium text-slate-500 hover:bg-slate-200 transition";
+        todayBtn.className = "px-2.5 py-1 rounded-md bg-[#267fe8] text-white shadow-xs transition";
+        allBtn.className = "px-2.5 py-1 rounded-md text-slate-600 hover:bg-slate-200 transition";
       }
-      renderScheduleTimeline();
+      render();
     }
 
-    function renderScheduleTimeline() {
-      const timeline = document.getElementById('timeline-list');
-      const dateLabel = document.getElementById('modal-date-label');
-      const countLabel = document.getElementById('modal-activity-count');
-      
-      let displayItems = [];
-      if (scheduleFilter === 'all') {
-        dateLabel.textContent = "全部活動列表";
-        displayItems = [...activities];
-      } else {
-        dateLabel.textContent = currentDate;
-        displayItems = activities.filter(a => !a.date || a.date === currentDate);
-      }
-      
-      // Sort chronologically by start time
-      displayItems.sort((a, b) => (a.startTime || "00:00").localeCompare(b.startTime || "00:00"));
-
-      if (countLabel) countLabel.textContent = `共 ${displayItems.length} 項`;
-
-      if (displayItems.length === 0) {
-        timeline.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">無課外活動安排</div>`;
-      } else {
-        timeline.innerHTML = displayItems.map(item => {
-          const isClub = item.category === "學會" || !item.category;
-          const barColor = isClub ? 'bg-[#009b9e]' : 'bg-amber-500';
-          const dotColor = isClub ? 'bg-[#009b9e] ring-teal-100' : 'bg-amber-500 ring-amber-100';
-
-          return `
-            <div onclick="closeScheduleModal(); openEditItemModal('${item.id}')" class="flex items-stretch space-x-3.5 relative cursor-pointer group">
-              <!-- Timeline indicator node -->
-              <div class="flex flex-col items-center pt-3.5">
-                <div class="w-3.5 h-3.5 rounded-full ${dotColor} ring-4 z-10 transition group-hover:scale-110"></div>
-                <div class="w-0.5 bg-slate-200 flex-1 -mt-1 -mb-1"></div>
-              </div>
-
-              <!-- Card Box with enlarged fonts, no student count -->
-              <div class="flex-1 bg-white border border-slate-200/90 rounded-xl shadow-xs hover:shadow-md hover:border-blue-300 transition flex overflow-hidden">
-                <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
-                  <div class="flex items-start space-x-4">
-                    <!-- Big Time Column -->
-                    <div class="text-sm sm:text-base font-bold text-slate-700 font-mono leading-tight whitespace-nowrap pt-0.5">
-                      <div>${escapeHtml(item.startTime || '15:30')}</div>
-                      <div class="text-slate-400 text-xs font-normal mt-0.5">${escapeHtml(item.endTime || '16:30')}</div>
-                    </div>
-                    <!-- Big Title -->
-                    <div class="flex-1">
-                      <h3 class="text-base sm:text-lg font-bold text-slate-800 leading-snug group-hover:text-[#267fe8] transition">
-                        ${escapeHtml(item.name)}
-                      </h3>
-                      <!-- Location & Date badge -->
-                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium text-slate-500 mt-2">
-                        <span class="flex items-center gap-1.5 text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
-                          <i class="fa-solid fa-location-dot text-teal-600 text-xs"></i>
-                          <span>${escapeHtml(item.room || '課室')}</span>
-                        </span>
-                        <span class="text-xs text-slate-400 font-normal">
-                          <i class="fa-regular fa-clock text-[11px]"></i> ${escapeHtml(item.timeRange || (item.startTime + ' - ' + item.endTime))}
-                        </span>
-                        ${scheduleFilter === 'all' && item.date ? `<span class="text-xs text-blue-500 font-mono font-medium">${item.date}</span>` : ''}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <!-- Right status color indicator -->
-                <div class="w-2.5 ${barColor} self-stretch"></div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-    }
-
-    function closeScheduleModal() {
-      stopAutoScroll();
-      document.getElementById('schedule-modal').classList.add('hidden');
-    }
-
-    // Auto-scroll loop for Daily Activities modal
-    let autoScrollInterval = null;
-    let isAutoScrolling = false;
-    let scrollDirection = 'down'; // 'down' or 'up'
-    let scrollPauseTimer = null;
-
+    // Auto-scroll loop
     function toggleAutoScroll() {
       if (isAutoScrolling) {
         stopAutoScroll();
@@ -1134,7 +686,7 @@
     }
 
     function startAutoScroll() {
-      const container = document.getElementById('timeline-list');
+      const container = document.getElementById('activity-container');
       if (!container) return;
       isAutoScrolling = true;
       scrollDirection = 'down';
@@ -1142,10 +694,11 @@
       const btn = document.getElementById('autoscroll-btn');
       const icon = document.getElementById('autoscroll-icon');
       const text = document.getElementById('autoscroll-text');
+      
       if (btn) {
-        btn.className = "px-2.5 py-1 rounded-md font-medium bg-amber-500 text-white shadow-xs transition flex items-center gap-1.5 animate-pulse";
+        btn.className = "px-2.5 py-1 rounded-md font-medium bg-amber-500 text-white shadow-xs transition flex items-center gap-1 animate-pulse";
       }
-      if (icon) icon.className = "fa-solid fa-pause text-[10px]";
+      if (icon) icon.className = "fa-solid fa-pause text-[9px]";
       if (text) text.textContent = "暫停滾動";
 
       runAutoScrollStep();
@@ -1155,7 +708,7 @@
       clearInterval(autoScrollInterval);
       clearTimeout(scrollPauseTimer);
 
-      const container = document.getElementById('timeline-list');
+      const container = document.getElementById('activity-container');
       if (!container) return;
 
       autoScrollInterval = setInterval(() => {
@@ -1164,7 +717,7 @@
         const maxScroll = container.scrollHeight - container.clientHeight;
         if (maxScroll <= 0) return;
 
-        const step = 1.2; // Smooth steady speed
+        const speed = 1.3;
 
         if (scrollDirection === 'down') {
           if (container.scrollTop >= maxScroll - 2) {
@@ -1173,9 +726,9 @@
               if (!isAutoScrolling) return;
               scrollDirection = 'up';
               runAutoScrollStep();
-            }, 1800); // Pause 1.8s at the bottom
+            }, 1800);
           } else {
-            container.scrollTop += step;
+            container.scrollTop += speed;
           }
         } else {
           if (container.scrollTop <= 2) {
@@ -1184,9 +737,9 @@
               if (!isAutoScrolling) return;
               scrollDirection = 'down';
               runAutoScrollStep();
-            }, 1800); // Pause 1.8s at top
+            }, 1800);
           } else {
-            container.scrollTop -= step;
+            container.scrollTop -= speed;
           }
         }
       }, 25);
@@ -1202,286 +755,101 @@
       const btn = document.getElementById('autoscroll-btn');
       const icon = document.getElementById('autoscroll-icon');
       const text = document.getElementById('autoscroll-text');
+      
       if (btn) {
-        btn.className = "px-2.5 py-1 rounded-md font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-2xs";
+        btn.className = "px-2.5 py-1 rounded-md font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition flex items-center gap-1 shadow-2xs";
       }
-      if (icon) icon.className = "fa-solid fa-play text-[10px]";
+      if (icon) icon.className = "fa-solid fa-play text-[9px] text-amber-600";
       if (text) text.textContent = "自動上下滾動";
     }
 
-    // PDF Import & Parsing Modal
-    function openPdfModal() {
-      document.getElementById('pdf-modal').classList.remove('hidden');
+    // Modal Operations
+    function openAddItemModal() {
+      document.getElementById('modal-title').textContent = "新增課外活動";
+      document.getElementById('edit-id').value = "";
+      document.getElementById('edit-name').value = "";
+      document.getElementById('edit-start').value = "15:25";
+      document.getElementById('edit-end').value = "16:30";
+      document.getElementById('edit-room').value = "601";
+      document.getElementById('edit-category').value = "學會";
+      document.getElementById('edit-date').value = currentDate;
+      document.getElementById('delete-btn').classList.add('hidden');
+
+      document.getElementById('item-modal').classList.remove('hidden');
     }
 
-    function closePdfModal() {
-      document.getElementById('pdf-modal').classList.add('hidden');
-      document.getElementById('pdf-status-text').textContent = '';
-    }
-
-    async function handlePdfUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const statusEl = document.getElementById('pdf-status-text');
-      statusEl.textContent = '讀取中... 請稍候';
-
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items.map(item => item.str).join(' ');
-          fullText += pageText + '\n';
-        }
-
-        document.getElementById('quick-text-input').value = fullText;
-        statusEl.textContent = `成功讀取 ${pdf.numPages} 頁！已轉成文字，請確認後按匯入。`;
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = 'PDF 解析失敗，請確保為標準文字 PDF。';
-      }
-    }
-
-    async function parseQuickTextInput() {
-      const text = document.getElementById('quick-text-input').value.trim();
-      if (!text) {
-        alert("請先貼上內容或上傳 PDF");
-        return;
-      }
-
-      const selectedCat = document.querySelector('input[name="import-cat"]:checked')?.value || "學會";
-      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-      const newItems = [];
-
-      lines.forEach((line, idx) => {
-        let timeRange = "14:40 - 15:40";
-        let startTime = "14:40";
-        let endTime = "15:40";
-        const timeMatch = line.match(/(\d{1,2}:\d{2})\s*[-~至到]\s*(\d{1,2}:\d{2})/);
-        if (timeMatch) {
-          startTime = timeMatch[1].padStart(5, '0');
-          endTime = timeMatch[2].padStart(5, '0');
-          timeRange = `${startTime} - ${endTime}`;
-        }
-
-        let present = 8, total = 8;
-        const countMatch = line.match(/(\d{1,2})\s*\/\s*(\d{1,2})/);
-        if (countMatch) {
-          present = parseInt(countMatch[1]);
-          total = parseInt(countMatch[2]);
-        }
-
-        let room = "課室";
-        const roomMatch = line.match(/(禮堂|大禮堂|操場|體育館|\d{3}[A-Za-z]?室?)/);
-        if (roomMatch) {
-          room = roomMatch[1];
-        }
-
-        let name = line
-          .replace(/\(?\d{1,2}:\d{2}\s*[-~至到]\s*\d{1,2}:\d{2}\)?/g, '')
-          .replace(/\d{1,2}\s*\/\s*\d{1,2}/g, '')
-          .replace(/(禮堂|大禮堂|操場|體育館|\d{3}[A-Za-z]?室?)/g, '')
-          .trim();
-
-        if (!name) name = `活動班別 ${idx + 1}`;
-
-        newItems.push({
-          id: 'custom-' + Date.now() + '-' + idx,
-          date: currentDate,
-          name: name,
-          category: selectedCat,
-          timeRange: timeRange,
-          startTime: startTime,
-          endTime: endTime,
-          room: room,
-          present: present,
-          total: total,
-          status: "已點名"
-        });
-      });
-
-      activities = [...newItems, ...activities];
-      await saveCloudData(true);
-      renderList();
-      closePdfModal();
-      alert(`已成功解析並新增 ${newItems.length} 個活動，並已即時同步！`);
-    }
-
-    async function resetDefaultData() {
-      if (confirm("確定要重設為範例活動資料嗎？")) {
-        activities = [...DEFAULT_DATA];
-        await saveCloudData(true);
-        renderList();
-        closePdfModal();
-      }
-    }
-
-    // Edit Item Modal Handlers
     function openEditItemModal(id) {
-      const modal = document.getElementById('edit-item-modal');
-      const title = document.getElementById('edit-modal-title');
-      const deleteBtn = document.getElementById('delete-btn');
+      const item = activities.find(a => a.id === id);
+      if (!item) return;
 
-      if (id) {
-        const item = activities.find(a => a.id === id);
-        if (!item) return;
-        title.textContent = "修改班別點名資料";
-        deleteBtn.classList.remove('hidden');
-        document.getElementById('item-id').value = item.id;
-        document.getElementById('item-name').value = item.name;
-        document.getElementById('item-start-time').value = item.startTime || "14:40";
-        document.getElementById('item-end-time').value = item.endTime || "15:40";
-        document.getElementById('item-room').value = item.room || "";
-        document.getElementById('item-category').value = item.category || "學會";
-        document.getElementById('item-present').value = item.present ?? 8;
-        document.getElementById('item-total').value = item.total ?? 8;
-        document.getElementById('item-status').value = item.status || "已點名";
-      } else {
-        title.textContent = "新增活動班別";
-        deleteBtn.classList.add('hidden');
-        document.getElementById('item-id').value = "";
-        document.getElementById('item-name').value = "";
-        document.getElementById('item-start-time').value = "14:40";
-        document.getElementById('item-end-time').value = "15:40";
-        document.getElementById('item-room').value = "403";
-        document.getElementById('item-category').value = currentCategory;
-        document.getElementById('item-present').value = 8;
-        document.getElementById('item-total').value = 8;
-        document.getElementById('item-status').value = "已點名";
-      }
+      document.getElementById('modal-title').textContent = "編輯活動資料";
+      document.getElementById('edit-id').value = item.id;
+      document.getElementById('edit-name').value = item.name;
+      document.getElementById('edit-start').value = item.startTime;
+      document.getElementById('edit-end').value = item.endTime;
+      document.getElementById('edit-room').value = item.room || "";
+      document.getElementById('edit-category').value = item.category || "學會";
+      document.getElementById('edit-date').value = item.date || currentDate;
+      document.getElementById('delete-btn').classList.remove('hidden');
 
-      modal.classList.remove('hidden');
+      document.getElementById('item-modal').classList.remove('hidden');
     }
 
-    function closeEditItemModal() {
-      document.getElementById('edit-item-modal').classList.add('hidden');
+    function closeItemModal() {
+      document.getElementById('item-modal').classList.add('hidden');
     }
 
-    async function saveItem(e) {
+    async function saveActivity(e) {
       e.preventDefault();
-      const id = document.getElementById('item-id').value;
-      const name = document.getElementById('item-name').value.trim();
-      const startTime = document.getElementById('item-start-time').value;
-      const endTime = document.getElementById('item-end-time').value;
-      const room = document.getElementById('item-room').value.trim() || "未指定";
-      const category = document.getElementById('item-category').value;
-      const present = parseInt(document.getElementById('item-present').value) || 0;
-      const total = parseInt(document.getElementById('item-total').value) || 0;
-      const status = document.getElementById('item-status').value;
+      const id = document.getElementById('edit-id').value;
+      const name = document.getElementById('edit-name').value.trim();
+      const startTime = document.getElementById('edit-start').value;
+      const endTime = document.getElementById('edit-end').value;
+      const room = document.getElementById('edit-room').value.trim() || "課室";
+      const category = document.getElementById('edit-category').value;
+      const date = document.getElementById('edit-date').value || currentDate;
 
       if (id) {
         const idx = activities.findIndex(a => a.id === id);
         if (idx !== -1) {
-          activities[idx] = {
-            ...activities[idx],
-            name,
-            startTime,
-            endTime,
-            timeRange: `${startTime} - ${endTime}`,
-            room,
-            category,
-            present,
-            total,
-            status
-          };
+          activities[idx] = { ...activities[idx], name, startTime, endTime, room, category, date };
         }
       } else {
-        activities.unshift({
+        activities.push({
           id: 'act-' + Date.now(),
-          date: currentDate,
           name,
-          category,
           startTime,
           endTime,
-          timeRange: `${startTime} - ${endTime}`,
           room,
-          present,
-          total,
-          status
+          category,
+          date
         });
       }
 
-      await saveCloudData(true);
-      renderList();
-      closeEditItemModal();
+      await persistData();
+      render();
+      closeItemModal();
     }
 
-    async function deleteCurrentItem() {
-      const id = document.getElementById('item-id').value;
+    async function deleteCurrentActivity() {
+      const id = document.getElementById('edit-id').value;
       if (!id) return;
-      if (confirm("確定要刪除此活動記錄嗎？")) {
+      if (confirm("確定要刪除此活動項嗎？")) {
         activities = activities.filter(a => a.id !== id);
-        await saveCloudData(true);
-        renderList();
-        closeEditItemModal();
+        await persistData();
+        render();
+        closeItemModal();
       }
     }
 
-    // Sync Modal & JSON Import / Export Handlers
-    function openSyncModal() {
-      updateSyncTimeUI();
-      document.getElementById('sync-modal').classList.remove('hidden');
-    }
-
-    function closeSyncModal() {
-      document.getElementById('sync-modal').classList.add('hidden');
-    }
-
-    function copySyncPayload() {
-      const payload = btoa(unescape(encodeURIComponent(JSON.stringify(activities))));
-      navigator.clipboard.writeText(payload).then(() => {
-        alert("已成功複製同步字串！可在手機或電腦的同步中心貼上以覆蓋同步。");
-      }).catch(() => {
-        prompt("請手動複製以下同步字串：", payload);
-      });
-    }
-
-    function downloadJsonFile() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activities, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `eclass_attendance_${currentDate}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    }
-
-    async function importSyncPayload() {
-      const raw = document.getElementById('import-payload-input').value.trim();
-      if (!raw) {
-        alert("請先貼上同步字串或 JSON");
-        return;
-      }
-      try {
-        let jsonStr = raw;
-        if (!raw.startsWith("[") && !raw.startsWith("{")) {
-          jsonStr = decodeURIComponent(escape(atob(raw)));
-        }
-        const parsed = JSON.parse(jsonStr);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          activities = parsed;
-          await saveCloudData(true);
-          renderList();
-          closeSyncModal();
-          alert(`同步成功！已載入 ${activities.length} 項活動記錄。`);
-        } else {
-          alert("資料格式無效，請確認為正確的活動記錄。");
-        }
-      } catch (err) {
-        alert("解析同步字串失敗，請確保完整貼上。");
-      }
-    }
-
-    function togglePage(view) {
-      const menuPage = document.getElementById('menu-page');
-      if (view === 'menu') {
-        menuPage.classList.remove('hidden');
-      } else {
-        menuPage.classList.add('hidden');
+    async function resetToDefaultData() {
+      if (confirm("確定重設為圖片中的 14 項活動日程？")) {
+        activities = [...INITIAL_ACTIVITIES];
+        currentDate = "2026-09-22";
+        document.getElementById('date-input').value = currentDate;
+        setFilterMode('today');
+        await persistData();
+        render();
       }
     }
 
@@ -1495,7 +863,7 @@
         .replace(/'/g, '&#039;');
     }
 
-    window.addEventListener('DOMContentLoaded', initApp);
+    window.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
