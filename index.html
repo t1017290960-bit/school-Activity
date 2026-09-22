@@ -103,7 +103,7 @@
       <div class="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
         <div class="flex items-center space-x-2">
           <i class="fa-regular fa-calendar text-slate-500 text-base"></i>
-          <input type="date" id="date-picker" onchange="onDateChange(this.value)" class="text-slate-700 font-medium text-sm outline-none bg-transparent cursor-pointer" value="2026-09-18">
+          <input type="date" id="date-picker" onchange="onDateChange(this.value)" class="text-slate-700 font-medium text-sm outline-none bg-transparent cursor-pointer" value="2026-09-22">
         </div>
         <div class="flex items-center space-x-1.5">
           <button onclick="refreshCloudData(true)" title="立即從雲端同步" class="text-xs text-slate-500 hover:text-[#267fe8] p-1.5 rounded-full hover:bg-slate-100 transition">
@@ -239,36 +239,50 @@
     </div>
 
     <!-- ==================== POPUP 1: 每日課外活動 日程 ==================== -->
-    <div id="schedule-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-[2px]">
-      <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-          <div class="flex items-center space-x-2 text-slate-700">
-            <i class="fa-regular fa-calendar-days text-[#009b9e] text-lg"></i>
-            <h2 class="text-base font-bold tracking-tight">每日課外活動</h2>
+    <div id="schedule-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-4 hidden backdrop-blur-[2px]">
+      <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
+        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+          <div class="flex items-center space-x-2 text-slate-800">
+            <i class="fa-regular fa-calendar-days text-[#009b9e] text-xl"></i>
+            <h2 class="text-lg font-bold tracking-tight">每日課外活動</h2>
+            <span id="modal-activity-count" class="text-xs bg-teal-50 text-teal-700 border border-teal-200 px-2 py-0.5 rounded-full font-medium ml-1"></span>
           </div>
-          <button onclick="closeScheduleModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
-            <i class="fa-solid fa-xmark text-lg"></i>
+          <button onclick="closeScheduleModal()" class="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+            <i class="fa-solid fa-xmark text-xl"></i>
           </button>
         </div>
 
-        <div class="px-5 py-2.5 bg-slate-50/80 border-b border-slate-100 flex items-center space-x-2 text-sm text-slate-600">
-          <i class="fa-regular fa-calendar text-slate-400"></i>
-          <span id="modal-date-label" class="font-medium">2026-09-18</span>
+        <div class="px-5 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-base text-slate-700">
+          <div class="flex items-center space-x-2 font-medium">
+            <i class="fa-regular fa-calendar text-[#267fe8]"></i>
+            <span id="modal-date-label" class="text-base font-bold text-slate-800">2026-09-22</span>
+          </div>
+          <div class="flex items-center space-x-2 text-xs">
+            <button id="autoscroll-btn" onclick="toggleAutoScroll()" title="啟動/暫停 自動上下平滑滾動" class="px-2.5 py-1 rounded-md font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-2xs">
+              <i id="autoscroll-icon" class="fa-solid fa-play text-[10px]"></i>
+              <span id="autoscroll-text">自動上下滾動</span>
+            </button>
+            <button id="filter-all-btn" onclick="toggleScheduleFilter('all')" class="px-2.5 py-1 rounded-md font-medium text-slate-500 hover:bg-slate-200 transition">顯示全部</button>
+            <button id="filter-today-btn" onclick="toggleScheduleFilter('today')" class="px-2.5 py-1 rounded-md font-medium bg-[#267fe8] text-white shadow-xs">本日活動</button>
+          </div>
         </div>
 
-        <div id="timeline-list" class="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+        <div id="timeline-list" class="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-3">
           <!-- Timeline injected via JS -->
         </div>
 
-        <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 flex items-center space-x-6 text-xs font-medium text-slate-600">
-          <div class="flex items-center space-x-2">
-            <span class="w-1.5 h-4 bg-[#009b9e] rounded-sm"></span>
-            <span>學會</span>
+        <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 flex items-center justify-between text-sm font-medium text-slate-700">
+          <div class="flex items-center space-x-6">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-4 bg-[#009b9e] rounded-sm"></span>
+              <span class="text-sm">學會</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-4 bg-amber-500 rounded-sm"></span>
+              <span class="text-sm">活動</span>
+            </div>
           </div>
-          <div class="flex items-center space-x-2">
-            <span class="w-1.5 h-4 bg-amber-500 rounded-sm"></span>
-            <span>活動</span>
-          </div>
+          <span class="text-xs text-slate-400">點擊活動可查看或編輯</span>
         </div>
       </div>
     </div>
@@ -482,6 +496,190 @@
   <!-- Javascript Logic -->
   <script>
     const DEFAULT_DATA = [
+      // 2026-09-22 活動 (截圖最新資料)
+      {
+        id: "act-22-1",
+        date: "2026-09-22",
+        name: "中文提升班 (三年級)",
+        category: "學會",
+        timeRange: "15:25 - 16:30",
+        startTime: "15:25",
+        endTime: "16:30",
+        room: "601",
+        present: 10,
+        total: 10,
+        status: "已點名"
+      },
+      {
+        id: "act-22-2",
+        date: "2026-09-22",
+        name: "中文提升班 (六年級)",
+        category: "學會",
+        timeRange: "15:25 - 16:30",
+        startTime: "15:25",
+        endTime: "16:30",
+        room: "604",
+        present: 10,
+        total: 10,
+        status: "已點名"
+      },
+      {
+        id: "act-22-3",
+        date: "2026-09-22",
+        name: "中文提升班 (五年級)",
+        category: "學會",
+        timeRange: "15:25 - 16:30",
+        startTime: "15:25",
+        endTime: "16:30",
+        room: "603",
+        present: 10,
+        total: 10,
+        status: "已點名"
+      },
+      {
+        id: "act-22-4",
+        date: "2026-09-22",
+        name: "中文提升班 (四年級)",
+        category: "學會",
+        timeRange: "15:25 - 16:30",
+        startTime: "15:25",
+        endTime: "16:30",
+        room: "602",
+        present: 10,
+        total: 10,
+        status: "已點名"
+      },
+      {
+        id: "act-22-5",
+        date: "2026-09-22",
+        name: "中國舞",
+        category: "學會",
+        timeRange: "15:30 - 17:00",
+        startTime: "15:30",
+        endTime: "17:00",
+        room: "2/F禮堂",
+        present: 15,
+        total: 15,
+        status: "已點名"
+      },
+      {
+        id: "act-22-6",
+        date: "2026-09-22",
+        name: "專注訓練初組",
+        category: "學會",
+        timeRange: "15:30 - 16:30",
+        startTime: "15:30",
+        endTime: "16:30",
+        room: "403",
+        present: 9,
+        total: 9,
+        status: "已點名"
+      },
+      {
+        id: "act-22-7",
+        date: "2026-09-22",
+        name: "足球隊",
+        category: "學會",
+        timeRange: "15:30 - 17:30",
+        startTime: "15:30",
+        endTime: "17:30",
+        room: "籃球場",
+        present: 16,
+        total: 16,
+        status: "已點名"
+      },
+      {
+        id: "act-22-8",
+        date: "2026-09-22",
+        name: "小五小六數學思維基礎訓練班",
+        category: "學會",
+        timeRange: "15:30 - 16:30",
+        startTime: "15:30",
+        endTime: "16:30",
+        room: "405",
+        present: 12,
+        total: 12,
+        status: "已點名"
+      },
+      {
+        id: "act-22-9",
+        date: "2026-09-22",
+        name: "手球隊",
+        category: "學會",
+        timeRange: "15:30 - 17:30",
+        startTime: "15:30",
+        endTime: "17:30",
+        room: "籃球場",
+        present: 14,
+        total: 14,
+        status: "已點名"
+      },
+      {
+        id: "act-22-10",
+        date: "2026-09-22",
+        name: "「生命知旅」生涯規劃訓練課程",
+        category: "學會",
+        timeRange: "15:30 - 16:30",
+        startTime: "15:30",
+        endTime: "16:30",
+        room: "404",
+        present: 10,
+        total: 10,
+        status: "已點名"
+      },
+      {
+        id: "act-22-11",
+        date: "2026-09-22",
+        name: "手鈴板A隊",
+        category: "學會",
+        timeRange: "15:30 - 17:30",
+        startTime: "15:30",
+        endTime: "17:30",
+        room: "3/F音樂室",
+        present: 12,
+        total: 12,
+        status: "已點名"
+      },
+      {
+        id: "act-22-12",
+        date: "2026-09-22",
+        name: "小一小二數學思維基礎訓練班",
+        category: "學會",
+        timeRange: "15:30 - 16:30",
+        startTime: "15:30",
+        endTime: "16:30",
+        room: "402",
+        present: 10,
+        total: 10,
+        status: "已點名"
+      },
+      {
+        id: "act-22-13",
+        date: "2026-09-22",
+        name: "小二中文基礎中文讀寫班",
+        category: "學會",
+        timeRange: "15:30 - 16:30",
+        startTime: "15:30",
+        endTime: "16:30",
+        room: "401",
+        present: 8,
+        total: 8,
+        status: "已點名"
+      },
+      {
+        id: "act-22-14",
+        date: "2026-09-22",
+        name: "STEAMER",
+        category: "學會",
+        timeRange: "15:30 - 16:30",
+        startTime: "15:30",
+        endTime: "16:30",
+        room: "5/F電腦室",
+        present: 15,
+        total: 15,
+        status: "已點名"
+      },
+      // 2026-09-18 原有活動
       {
         id: "act-1",
         date: "2026-09-18",
@@ -564,7 +762,8 @@
 
     let activities = [];
     let currentCategory = "學會";
-    let currentDate = "2026-09-18";
+    let currentDate = "2026-09-22";
+    let scheduleFilter = "today"; // 'today' or 'all'
     let lastSyncTimestamp = null;
 
     // Clock
@@ -616,7 +815,14 @@
           }
 
           if (localSaved) {
-            activities = JSON.parse(localSaved);
+            const parsedLocal = JSON.parse(localSaved);
+            // Ensure 2026-09-22 items exist even if an older cache was loaded
+            const has22 = parsedLocal.some(a => a.date === "2026-09-22");
+            if (has22) {
+              activities = parsedLocal;
+            } else {
+              activities = [...DEFAULT_DATA.filter(d => d.date === "2026-09-22"), ...parsedLocal];
+            }
           } else {
             activities = [...DEFAULT_DATA];
           }
@@ -833,57 +1039,193 @@
       `).join('');
     }
 
-    // Render Timeline Popup (每日課外活動)
+    // Render Timeline Popup (每日課外活動 - 字體放大、移除人數、一次展現全部活動)
     function openScheduleModal() {
       const modal = document.getElementById('schedule-modal');
+      renderScheduleTimeline();
+      modal.classList.remove('hidden');
+    }
+
+    function toggleScheduleFilter(mode) {
+      scheduleFilter = mode;
+      const todayBtn = document.getElementById('filter-today-btn');
+      const allBtn = document.getElementById('filter-all-btn');
+
+      if (mode === 'all') {
+        allBtn.className = "px-2.5 py-1 rounded-md font-medium bg-[#267fe8] text-white shadow-xs";
+        todayBtn.className = "px-2.5 py-1 rounded-md font-medium text-slate-500 hover:bg-slate-200 transition";
+      } else {
+        todayBtn.className = "px-2.5 py-1 rounded-md font-medium bg-[#267fe8] text-white shadow-xs";
+        allBtn.className = "px-2.5 py-1 rounded-md font-medium text-slate-500 hover:bg-slate-200 transition";
+      }
+      renderScheduleTimeline();
+    }
+
+    function renderScheduleTimeline() {
       const timeline = document.getElementById('timeline-list');
       const dateLabel = document.getElementById('modal-date-label');
+      const countLabel = document.getElementById('modal-activity-count');
       
-      dateLabel.textContent = currentDate;
-      const dailyItems = activities.filter(a => !a.date || a.date === currentDate);
-      
-      if (dailyItems.length === 0) {
-        timeline.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">本日無課外活動安排</div>`;
+      let displayItems = [];
+      if (scheduleFilter === 'all') {
+        dateLabel.textContent = "全部活動列表";
+        displayItems = [...activities];
       } else {
-        timeline.innerHTML = dailyItems.map(item => {
+        dateLabel.textContent = currentDate;
+        displayItems = activities.filter(a => !a.date || a.date === currentDate);
+      }
+      
+      // Sort chronologically by start time
+      displayItems.sort((a, b) => (a.startTime || "00:00").localeCompare(b.startTime || "00:00"));
+
+      if (countLabel) countLabel.textContent = `共 ${displayItems.length} 項`;
+
+      if (displayItems.length === 0) {
+        timeline.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">無課外活動安排</div>`;
+      } else {
+        timeline.innerHTML = displayItems.map(item => {
           const isClub = item.category === "學會" || !item.category;
           const barColor = isClub ? 'bg-[#009b9e]' : 'bg-amber-500';
-          const dotColor = isClub ? 'bg-emerald-400 ring-emerald-100' : 'bg-amber-400 ring-amber-100';
+          const dotColor = isClub ? 'bg-[#009b9e] ring-teal-100' : 'bg-amber-500 ring-amber-100';
 
           return `
-            <div class="flex items-stretch space-x-3.5 relative">
-              <div class="flex flex-col items-center">
-                <div class="w-3.5 h-3.5 rounded-full ${dotColor} ring-4 mt-4 z-10"></div>
+            <div onclick="closeScheduleModal(); openEditItemModal('${item.id}')" class="flex items-stretch space-x-3.5 relative cursor-pointer group">
+              <!-- Timeline indicator node -->
+              <div class="flex flex-col items-center pt-3.5">
+                <div class="w-3.5 h-3.5 rounded-full ${dotColor} ring-4 z-10 transition group-hover:scale-110"></div>
                 <div class="w-0.5 bg-slate-200 flex-1 -mt-1 -mb-1"></div>
               </div>
-              <div class="flex-1 bg-white border border-slate-200/80 rounded-lg shadow-sm hover:shadow transition flex overflow-hidden">
-                <div class="p-3.5 flex-1 flex flex-col justify-between">
-                  <div class="flex items-baseline space-x-3">
-                    <div class="text-xs text-slate-400 font-mono leading-tight whitespace-nowrap">
-                      <div>${escapeHtml(item.startTime || '14:40')}</div>
-                      <div>${escapeHtml(item.endTime || '15:40')}</div>
+
+              <!-- Card Box with enlarged fonts, no student count -->
+              <div class="flex-1 bg-white border border-slate-200/90 rounded-xl shadow-xs hover:shadow-md hover:border-blue-300 transition flex overflow-hidden">
+                <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
+                  <div class="flex items-start space-x-4">
+                    <!-- Big Time Column -->
+                    <div class="text-sm sm:text-base font-bold text-slate-700 font-mono leading-tight whitespace-nowrap pt-0.5">
+                      <div>${escapeHtml(item.startTime || '15:30')}</div>
+                      <div class="text-slate-400 text-xs font-normal mt-0.5">${escapeHtml(item.endTime || '16:30')}</div>
                     </div>
-                    <div class="text-sm font-medium text-slate-800 leading-snug">
-                      ${escapeHtml(item.name)}
+                    <!-- Big Title -->
+                    <div class="flex-1">
+                      <h3 class="text-base sm:text-lg font-bold text-slate-800 leading-snug group-hover:text-[#267fe8] transition">
+                        ${escapeHtml(item.name)}
+                      </h3>
+                      <!-- Location & Date badge -->
+                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium text-slate-500 mt-2">
+                        <span class="flex items-center gap-1.5 text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                          <i class="fa-solid fa-location-dot text-teal-600 text-xs"></i>
+                          <span>${escapeHtml(item.room || '課室')}</span>
+                        </span>
+                        <span class="text-xs text-slate-400 font-normal">
+                          <i class="fa-regular fa-clock text-[11px]"></i> ${escapeHtml(item.timeRange || (item.startTime + ' - ' + item.endTime))}
+                        </span>
+                        ${scheduleFilter === 'all' && item.date ? `<span class="text-xs text-blue-500 font-mono font-medium">${item.date}</span>` : ''}
+                      </div>
                     </div>
-                  </div>
-                  <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-2 pl-9">
-                    <i class="fa-solid fa-location-dot text-[11px] text-slate-400"></i>
-                    <span>${escapeHtml(item.room || '課室')} · 人數: ${item.present}/${item.total}</span>
                   </div>
                 </div>
-                <div class="w-2 ${barColor} self-stretch"></div>
+                <!-- Right status color indicator -->
+                <div class="w-2.5 ${barColor} self-stretch"></div>
               </div>
             </div>
           `;
         }).join('');
       }
-
-      modal.classList.remove('hidden');
     }
 
     function closeScheduleModal() {
+      stopAutoScroll();
       document.getElementById('schedule-modal').classList.add('hidden');
+    }
+
+    // Auto-scroll loop for Daily Activities modal
+    let autoScrollInterval = null;
+    let isAutoScrolling = false;
+    let scrollDirection = 'down'; // 'down' or 'up'
+    let scrollPauseTimer = null;
+
+    function toggleAutoScroll() {
+      if (isAutoScrolling) {
+        stopAutoScroll();
+      } else {
+        startAutoScroll();
+      }
+    }
+
+    function startAutoScroll() {
+      const container = document.getElementById('timeline-list');
+      if (!container) return;
+      isAutoScrolling = true;
+      scrollDirection = 'down';
+
+      const btn = document.getElementById('autoscroll-btn');
+      const icon = document.getElementById('autoscroll-icon');
+      const text = document.getElementById('autoscroll-text');
+      if (btn) {
+        btn.className = "px-2.5 py-1 rounded-md font-medium bg-amber-500 text-white shadow-xs transition flex items-center gap-1.5 animate-pulse";
+      }
+      if (icon) icon.className = "fa-solid fa-pause text-[10px]";
+      if (text) text.textContent = "暫停滾動";
+
+      runAutoScrollStep();
+    }
+
+    function runAutoScrollStep() {
+      clearInterval(autoScrollInterval);
+      clearTimeout(scrollPauseTimer);
+
+      const container = document.getElementById('timeline-list');
+      if (!container) return;
+
+      autoScrollInterval = setInterval(() => {
+        if (!isAutoScrolling || !container) return;
+
+        const maxScroll = container.scrollHeight - container.clientHeight;
+        if (maxScroll <= 0) return;
+
+        const step = 1.2; // Smooth steady speed
+
+        if (scrollDirection === 'down') {
+          if (container.scrollTop >= maxScroll - 2) {
+            clearInterval(autoScrollInterval);
+            scrollPauseTimer = setTimeout(() => {
+              if (!isAutoScrolling) return;
+              scrollDirection = 'up';
+              runAutoScrollStep();
+            }, 1800); // Pause 1.8s at the bottom
+          } else {
+            container.scrollTop += step;
+          }
+        } else {
+          if (container.scrollTop <= 2) {
+            clearInterval(autoScrollInterval);
+            scrollPauseTimer = setTimeout(() => {
+              if (!isAutoScrolling) return;
+              scrollDirection = 'down';
+              runAutoScrollStep();
+            }, 1800); // Pause 1.8s at top
+          } else {
+            container.scrollTop -= step;
+          }
+        }
+      }, 25);
+    }
+
+    function stopAutoScroll() {
+      isAutoScrolling = false;
+      clearInterval(autoScrollInterval);
+      clearTimeout(scrollPauseTimer);
+      autoScrollInterval = null;
+      scrollPauseTimer = null;
+
+      const btn = document.getElementById('autoscroll-btn');
+      const icon = document.getElementById('autoscroll-icon');
+      const text = document.getElementById('autoscroll-text');
+      if (btn) {
+        btn.className = "px-2.5 py-1 rounded-md font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-2xs";
+      }
+      if (icon) icon.className = "fa-solid fa-play text-[10px]";
+      if (text) text.textContent = "自動上下滾動";
     }
 
     // PDF Import & Parsing Modal
