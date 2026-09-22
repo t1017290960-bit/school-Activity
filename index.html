@@ -41,22 +41,8 @@
 <body class="bg-slate-100 flex justify-center min-h-screen text-slate-800 antialiased selection:bg-blue-100">
 
   <!-- Mobile Frame Container -->
-  <div class="w-full max-w-md bg-white min-h-screen shadow-2xl flex flex-col relative pb-20 select-none">
+  <div class="w-full max-w-md bg-white min-h-screen shadow-2xl flex flex-col relative pb-4 select-none">
     
-    <!-- Top iOS-style status bar -->
-    <div class="bg-[#267fe8] text-white pt-2 px-5 flex justify-between items-center text-xs font-semibold">
-      <span id="current-clock">14:40</span>
-      <div class="flex items-center space-x-2 text-xs">
-        <span id="sync-pill" onclick="openSyncModal()" class="cursor-pointer bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 transition">
-          <i id="sync-icon" class="fa-solid fa-cloud"></i>
-          <span id="sync-text">已連線</span>
-        </span>
-        <i class="fa-solid fa-signal"></i>
-        <i class="fa-solid fa-wifi"></i>
-        <i class="fa-solid fa-battery-full text-sm"></i>
-      </div>
-    </div>
-
     <!-- Header Bar -->
     <header class="bg-[#267fe8] text-white px-3 py-2.5 flex items-center justify-between shadow-sm relative z-10">
       <button onclick="togglePage('menu')" class="flex items-center space-x-1 text-white hover:opacity-80 active:scale-95 transition text-base font-normal">
@@ -100,18 +86,38 @@
     <main class="flex-1 flex flex-col bg-white overflow-y-auto custom-scrollbar">
 
       <!-- Date Row & Sync status banner -->
-      <div class="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-        <div class="flex items-center space-x-2">
-          <i class="fa-regular fa-calendar text-slate-500 text-base"></i>
-          <input type="date" id="date-picker" onchange="onDateChange(this.value)" class="text-slate-700 font-medium text-sm outline-none bg-transparent cursor-pointer" value="2026-09-22">
+      <div class="px-4 py-2 border-b border-slate-100 flex flex-col gap-2 bg-white sticky top-0 z-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i class="fa-regular fa-calendar text-slate-500 text-base"></i>
+            <input type="date" id="date-picker" onchange="onDateChange(this.value)" class="text-slate-700 font-medium text-sm outline-none bg-transparent cursor-pointer" value="2026-09-22">
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <button onclick="refreshCloudData(true)" title="立即從雲端同步" class="text-xs text-slate-500 hover:text-[#267fe8] p-1.5 rounded-full hover:bg-slate-100 transition">
+              <i class="fa-solid fa-rotate text-xs"></i>
+            </button>
+            <button onclick="openEditItemModal(null)" class="text-xs font-medium text-[#267fe8] bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1">
+              <i class="fa-solid fa-plus text-[10px]"></i> 新增班別
+            </button>
+          </div>
         </div>
-        <div class="flex items-center space-x-1.5">
-          <button onclick="refreshCloudData(true)" title="立即從雲端同步" class="text-xs text-slate-500 hover:text-[#267fe8] p-1.5 rounded-full hover:bg-slate-100 transition">
-            <i class="fa-solid fa-rotate text-xs"></i>
-          </button>
-          <button onclick="openEditItemModal(null)" class="text-xs font-medium text-[#267fe8] bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1">
-            <i class="fa-solid fa-plus text-[10px]"></i> 新增班別
-          </button>
+
+        <!-- Quick Date Shortcuts for September 2026 Calendar -->
+        <div class="flex items-center space-x-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs font-medium text-slate-500">
+          <span class="text-[11px] text-slate-400 whitespace-nowrap"><i class="fa-solid fa-calendar-check text-blue-500 mr-0.5"></i>日期：</span>
+          <button onclick="quickSetDate('2026-09-14')" id="pill-2026-09-14" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/14 (一)</button>
+          <button onclick="quickSetDate('2026-09-15')" id="pill-2026-09-15" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/15 (二)</button>
+          <button onclick="quickSetDate('2026-09-16')" id="pill-2026-09-16" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/16 (三)</button>
+          <button onclick="quickSetDate('2026-09-17')" id="pill-2026-09-17" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/17 (四)</button>
+          <button onclick="quickSetDate('2026-09-18')" id="pill-2026-09-18" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/18 (五)</button>
+          <button onclick="quickSetDate('2026-09-21')" id="pill-2026-09-21" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/21 (一)</button>
+          <button onclick="quickSetDate('2026-09-22')" id="pill-2026-09-22" class="px-2 py-0.5 rounded-full transition whitespace-nowrap bg-blue-50 text-[#267fe8] font-semibold border border-blue-200">9/22 (二)</button>
+          <button onclick="quickSetDate('2026-09-23')" id="pill-2026-09-23" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/23 (三)</button>
+          <button onclick="quickSetDate('2026-09-24')" id="pill-2026-09-24" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/24 (四)</button>
+          <button onclick="quickSetDate('2026-09-25')" id="pill-2026-09-25" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/25 (五)</button>
+          <button onclick="quickSetDate('2026-09-28')" id="pill-2026-09-28" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/28 (一)</button>
+          <button onclick="quickSetDate('2026-09-29')" id="pill-2026-09-29" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/29 (二)</button>
+          <button onclick="quickSetDate('2026-09-30')" id="pill-2026-09-30" class="px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200">9/30 (三)</button>
         </div>
       </div>
 
@@ -143,36 +149,6 @@
       </div>
 
     </main>
-
-    <!-- Bottom Navigation Bar -->
-    <nav class="absolute bottom-0 left-0 right-0 h-16 bg-white border-t border-slate-200 flex items-center justify-around px-2 z-20">
-      <button class="flex flex-col items-center text-slate-400 hover:text-[#267fe8] text-xs space-y-1">
-        <i class="fa-solid fa-house text-lg"></i>
-        <span>首頁</span>
-      </button>
-      <button class="flex flex-col items-center text-slate-400 hover:text-[#267fe8] text-xs space-y-1 relative">
-        <span class="relative">
-          <i class="fa-solid fa-comment-dots text-lg"></i>
-          <span class="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-        </span>
-        <span>即時訊息</span>
-      </button>
-      <button onclick="togglePage('attendance')" class="flex flex-col items-center text-[#267fe8] text-xs space-y-1">
-        <i class="fa-solid fa-right-left text-lg"></i>
-        <span class="font-medium">點名</span>
-      </button>
-      <button class="flex flex-col items-center text-slate-400 hover:text-[#267fe8] text-xs space-y-1">
-        <i class="fa-regular fa-newspaper text-lg"></i>
-        <span>職員通告</span>
-      </button>
-      <button onclick="togglePage('menu')" class="flex flex-col items-center text-slate-400 hover:text-[#267fe8] text-xs space-y-1 relative">
-        <span class="relative">
-          <i class="fa-solid fa-bars text-lg"></i>
-          <span class="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-        </span>
-        <span>更多</span>
-      </button>
-    </nav>
 
     <!-- ==================== POPUP: 手機與電腦同步中心 ==================== -->
     <div id="sync-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-[2px]">
@@ -416,16 +392,12 @@
 
     <!-- ==================== POPUP 4: "更多" 選單頁 ==================== -->
     <div id="menu-page" class="absolute inset-0 bg-[#f4f5f9] z-30 flex flex-col hidden overflow-y-auto">
-      <div class="bg-[#267fe8] text-white pt-2 px-5 flex justify-between items-center text-xs font-semibold">
-        <span>14:40</span>
-        <div class="flex items-center space-x-1.5 text-xs">
-          <i class="fa-solid fa-signal"></i>
-          <i class="fa-solid fa-wifi"></i>
-          <i class="fa-solid fa-battery-full text-sm"></i>
-        </div>
-      </div>
-      <div class="bg-[#267fe8] text-white py-3 text-center text-lg font-medium shadow-sm">
-        更多
+      <div class="bg-[#267fe8] text-white py-3.5 px-4 flex items-center justify-between shadow-sm">
+        <button onclick="togglePage('attendance')" class="text-white flex items-center gap-1 text-sm hover:opacity-80">
+          <i class="fa-solid fa-chevron-left text-xs"></i> 返回點名
+        </button>
+        <span class="text-base font-medium">更多</span>
+        <div class="w-12"></div>
       </div>
 
       <!-- Menu Items List -->
@@ -495,271 +467,277 @@
 
   <!-- Javascript Logic -->
   <script>
-    const DEFAULT_DATA = [
-      // 2026-09-22 活動 (截圖最新資料)
-      {
-        id: "act-22-1",
-        date: "2026-09-22",
-        name: "中文提升班 (三年級)",
-        category: "學會",
-        timeRange: "15:25 - 16:30",
-        startTime: "15:25",
-        endTime: "16:30",
-        room: "601",
-        present: 10,
-        total: 10,
-        status: "已點名"
-      },
-      {
-        id: "act-22-2",
-        date: "2026-09-22",
-        name: "中文提升班 (六年級)",
-        category: "學會",
-        timeRange: "15:25 - 16:30",
-        startTime: "15:25",
-        endTime: "16:30",
-        room: "604",
-        present: 10,
-        total: 10,
-        status: "已點名"
-      },
-      {
-        id: "act-22-3",
-        date: "2026-09-22",
-        name: "中文提升班 (五年級)",
-        category: "學會",
-        timeRange: "15:25 - 16:30",
-        startTime: "15:25",
-        endTime: "16:30",
-        room: "603",
-        present: 10,
-        total: 10,
-        status: "已點名"
-      },
-      {
-        id: "act-22-4",
-        date: "2026-09-22",
-        name: "中文提升班 (四年級)",
-        category: "學會",
-        timeRange: "15:25 - 16:30",
-        startTime: "15:25",
-        endTime: "16:30",
-        room: "602",
-        present: 10,
-        total: 10,
-        status: "已點名"
-      },
-      {
-        id: "act-22-5",
-        date: "2026-09-22",
-        name: "中國舞",
-        category: "學會",
-        timeRange: "15:30 - 17:00",
-        startTime: "15:30",
-        endTime: "17:00",
-        room: "2/F禮堂",
-        present: 15,
-        total: 15,
-        status: "已點名"
-      },
-      {
-        id: "act-22-6",
-        date: "2026-09-22",
-        name: "專注訓練初組",
-        category: "學會",
-        timeRange: "15:30 - 16:30",
-        startTime: "15:30",
-        endTime: "16:30",
-        room: "403",
-        present: 9,
-        total: 9,
-        status: "已點名"
-      },
-      {
-        id: "act-22-7",
-        date: "2026-09-22",
-        name: "足球隊",
-        category: "學會",
-        timeRange: "15:30 - 17:30",
-        startTime: "15:30",
-        endTime: "17:30",
-        room: "籃球場",
-        present: 16,
-        total: 16,
-        status: "已點名"
-      },
-      {
-        id: "act-22-8",
-        date: "2026-09-22",
-        name: "小五小六數學思維基礎訓練班",
-        category: "學會",
-        timeRange: "15:30 - 16:30",
-        startTime: "15:30",
-        endTime: "16:30",
-        room: "405",
-        present: 12,
-        total: 12,
-        status: "已點名"
-      },
-      {
-        id: "act-22-9",
-        date: "2026-09-22",
-        name: "手球隊",
-        category: "學會",
-        timeRange: "15:30 - 17:30",
-        startTime: "15:30",
-        endTime: "17:30",
-        room: "籃球場",
-        present: 14,
-        total: 14,
-        status: "已點名"
-      },
-      {
-        id: "act-22-10",
-        date: "2026-09-22",
-        name: "「生命知旅」生涯規劃訓練課程",
-        category: "學會",
-        timeRange: "15:30 - 16:30",
-        startTime: "15:30",
-        endTime: "16:30",
-        room: "404",
-        present: 10,
-        total: 10,
-        status: "已點名"
-      },
-      {
-        id: "act-22-11",
-        date: "2026-09-22",
-        name: "手鈴板A隊",
-        category: "學會",
-        timeRange: "15:30 - 17:30",
-        startTime: "15:30",
-        endTime: "17:30",
-        room: "3/F音樂室",
-        present: 12,
-        total: 12,
-        status: "已點名"
-      },
-      {
-        id: "act-22-12",
-        date: "2026-09-22",
-        name: "小一小二數學思維基礎訓練班",
-        category: "學會",
-        timeRange: "15:30 - 16:30",
-        startTime: "15:30",
-        endTime: "16:30",
-        room: "402",
-        present: 10,
-        total: 10,
-        status: "已點名"
-      },
-      {
-        id: "act-22-13",
-        date: "2026-09-22",
-        name: "小二中文基礎中文讀寫班",
-        category: "學會",
-        timeRange: "15:30 - 16:30",
-        startTime: "15:30",
-        endTime: "16:30",
-        room: "401",
-        present: 8,
-        total: 8,
-        status: "已點名"
-      },
-      {
-        id: "act-22-14",
-        date: "2026-09-22",
-        name: "STEAMER",
-        category: "學會",
-        timeRange: "15:30 - 16:30",
-        startTime: "15:30",
-        endTime: "16:30",
-        room: "5/F電腦室",
-        present: 15,
-        total: 15,
-        status: "已點名"
-      },
-      // 2026-09-18 原有活動
-      {
-        id: "act-1",
-        date: "2026-09-18",
-        name: "大小肌訓練班",
-        category: "學會",
-        timeRange: "14:40 - 15:40",
-        startTime: "14:40",
-        endTime: "15:40",
-        room: "402",
-        present: 8,
-        total: 8,
-        status: "已點名"
-      },
-      {
-        id: "act-2",
-        date: "2026-09-18",
-        name: "小三小四英文讀寫基礎班",
-        category: "學會",
-        timeRange: "14:40 - 15:40",
-        startTime: "14:40",
-        endTime: "15:40",
-        room: "405",
-        present: 10,
-        total: 10,
-        status: "已點名"
-      },
-      {
-        id: "act-3",
-        date: "2026-09-18",
-        name: "六色積木體應用與體驗訓練初班",
-        category: "學會",
-        timeRange: "14:40 - 15:40",
-        startTime: "14:40",
-        endTime: "15:40",
-        room: "406",
-        present: 5,
-        total: 5,
-        status: "已點名"
-      },
-      {
-        id: "act-4",
-        date: "2026-09-18",
-        name: "高級組中國鼓",
-        category: "活動",
-        timeRange: "14:40 - 16:40",
-        startTime: "14:40",
-        endTime: "16:40",
-        room: "大禮堂",
-        present: 18,
-        total: 18,
-        status: "已點名"
-      },
-      {
-        id: "act-5",
-        date: "2026-09-18",
-        name: "無火煮食初班",
-        category: "學會",
-        timeRange: "14:40 - 15:40",
-        startTime: "14:40",
-        endTime: "15:40",
-        room: "403",
-        present: 7,
-        total: 7,
-        status: "已點名"
-      },
-      {
-        id: "act-6",
-        date: "2026-09-18",
-        name: "無火煮食進階班",
-        category: "學會",
-        timeRange: "14:40 - 15:40",
-        startTime: "14:40",
-        endTime: "15:40",
-        room: "404",
-        present: 8,
-        total: 8,
-        status: "已點名"
-      }
-    ];
+    // Raw calendar data parsed directly from calendar_view.csv
+    const RAW_CALENDAR_CSV = `
+2026-09-06
+13:30 - 17:30 <香港國際慈善論壇> 開幕表演生 (3/F音樂室)
 
+2026-09-07
+06:00 - 11:00 <香港國際慈善論壇> 開幕表演生 (3/F音樂室)
+
+2026-09-11
+14:40 - 16:40 高級組中國鼓 (大禮堂)
+
+2026-09-14
+15:30 - 16:30 小一中文讀寫基礎班 (401)
+15:30 - 16:30 社交學堂初班 (402)
+15:30 - 16:30 小三小四數學思維基礎訓練班 (403)
+15:30 - 16:30 雜耍校隊 (404)
+15:30 - 16:30 雜耍表演訓練班 (405)
+
+2026-09-15
+15:30 - 16:30 小一小二數學思維基礎訓練班 (402)
+15:30 - 16:30 專注訓練初組 (403)
+15:30 - 16:30 「生命知旅」生涯規劃訓練課程 (404)
+15:30 - 16:30 小五小六數學思維基礎訓練班 (405)
+
+2026-09-16
+15:30 - 16:30 小一小二英文讀寫基礎班 (401)
+15:30 - 16:30 專注訓練進階班 (402)
+15:30 - 16:30 魔術表演初班 (403)
+15:30 - 16:30 小五小六英文讀寫支援班 (404)
+15:30 - 16:30 六色積木體應用與體驗訓練進階班 (406)
+
+2026-09-17
+15:30 - 16:30 自理訓練班 (401)
+15:30 - 16:30 小三小四中文讀寫支援班 (402)
+15:30 - 16:30 社交學堂進階班 (403)
+15:30 - 16:30 小五小六中文讀寫支援班 (404)
+15:30 - 16:30 魔術表演進階班 (406)
+
+2026-09-18
+14:40 - 15:40 大小肌訓練班 (401)
+14:40 - 15:40 小三小四英文讀寫基礎班 (402)
+14:40 - 15:40 無火煮食初班 (403)
+14:40 - 15:40 無火煮食進階班 (404)
+14:40 - 15:40 六色積木體應用與體驗訓練初班 (406)
+14:40 - 16:40 高級組中國鼓 (大禮堂)
+
+2026-09-21
+15:25 - 16:30 英文精進班 (六年級) (501)
+15:25 - 16:30 英文提升班 (三年級) (502)
+15:25 - 16:30 英文提升班 (四年級) (503)
+15:25 - 16:30 英文提升班 (五年級) (504)
+15:25 - 16:30 英文提升班 (六年級) (505)
+15:30 - 16:30 小一中文讀寫基礎班 (401)
+15:30 - 16:30 社交學堂初班 (402)
+15:30 - 16:30 小三小四數學思維基礎訓練班 (403)
+15:30 - 16:30 雜耍校隊 (404)
+15:30 - 16:30 雜耍表演訓練班 (405)
+15:30 - 16:30 普通話小精英 (605)
+15:30 - 17:00 視藝小精英 1 (4/F視藝室)
+15:30 - 17:00 視藝小精英 2 (6/F工藝室)
+15:30 - 17:00 花式跳繩 (6/F學生活動中心)
+15:30 - 17:00 運動拔尖 (跑道)
+15:30 - 17:30 排球隊 (籃球埸)
+15:30 - 17:30 羽毛球隊 (雨天操場/大禮堂)
+
+2026-09-22
+15:25 - 16:30 中文提升班 (三年級) (601)
+15:25 - 16:30 中文提升班 (四年級) (602)
+15:25 - 16:30 中文提升班 (五年級) (603)
+15:25 - 16:30 中文提升班 (六年級) (604)
+15:30 - 16:30 小二中文基礎中文讀寫班 (401)
+15:30 - 16:30 小一小二數學思維基礎訓練班 (402)
+15:30 - 16:30 專注訓練初組 (403)
+15:30 - 16:30 「生命知旅」生涯規劃訓練課程 (404)
+15:30 - 16:30 小五小六數學思維基礎訓練班 (405)
+15:30 - 16:30 STEAMER (5/F電腦室)
+15:30 - 17:00 中國舞 (2/F禮堂)
+15:30 - 17:30 手鈴板A隊 (3/F音樂室)
+15:30 - 17:30 足球隊 (籃球埸)
+15:30 - 17:30 手球隊 (籃球場)
+
+2026-09-23
+15:25 - 16:30 數學提升班 (三年級) (603)
+15:25 - 16:30 數學提升班 (五年級) (604)
+15:30 - 16:30 科學小先鋒 (1/F常識室)
+15:30 - 16:30 小一小二英文讀寫基礎班 (401)
+15:30 - 16:30 專注訓練進階班 (402)
+15:30 - 16:30 魔術表演初班 (403)
+15:30 - 16:30 小五小六英文讀寫支援班 (404)
+15:30 - 16:30 六色積木體應用與體驗訓練進階班 (406)
+15:30 - 16:30 校園電視台 (5/F電腦室)
+15:30 - 16:30 基督小精兵 (G/F小禮堂)
+15:30 - 16:30 English Ambassadors (Rm205)
+15:30 - 17:00 集誦語文小菁英 (Rm603/604)
+15:30 - 17:00 非華語中文班 (Rm605)
+15:30 - 17:30 手鈴板B隊 (3/F音樂室)
+15:30 - 17:30 閃避球隊 (籃球埸)
+15:30 - 17:30 羽毛球隊 (雨天操場/大禮堂)
+15:30 - 17:30 田徑隊 (雨天操場/跑道/運動場)
+
+2026-09-24
+14:15 - 15:15 (樂動)Yr2 - 大號a (6/F活動中心/工藝室/6D/6E)
+14:15 - 15:15 (樂動)Yr2 - 大號b (6/F活動中心/工藝室/6D/6E)
+14:15 - 15:15 (樂動)Yr2 - 長號 (6/F活動中心/工藝室/6D/6E)
+14:15 - 15:15 (樂動)Yr2 - 圓號a (6/F活動中心/工藝室/6D/6E)
+14:15 - 15:15 (樂動)Yr2 - 圓號b (6/F活動中心/工藝室/6D/6E)
+14:15 - 15:25 初級組合唱團 (3/F音樂室)
+15:30 - 16:30 English Drama (2/F大禮堂)
+15:30 - 16:30 自理訓練班 (401)
+15:30 - 16:30 小三小四中文讀寫支援班 (402)
+15:30 - 16:30 社交學堂進階班 (403)
+15:30 - 16:30 小五小六中文讀寫支援班 (404)
+15:30 - 16:30 魔術表演進階班 (406)
+15:30 - 16:30 (樂動)Yr1 - 小號a (6/F 全層)
+15:30 - 16:30 (樂動)Yr1 - 小號b (6/F 全層)
+15:30 - 16:30 (樂動)Yr1 - 上低音號a (6/F 全層)
+15:30 - 16:30 (樂動)Yr1 - 上低音號b (6/F 全層)
+15:30 - 16:30 (樂動)Yr1 - 長號 (6/F 全層)
+15:30 - 16:30 (樂動)Yr1 - 圓號a (6/F 全層)
+15:30 - 16:30 (樂動)Yr1 - 圓號b (6/F 全層)
+15:30 - 16:30 (樂動)Yr2 - 小號a (6/F活動中心/工藝室/6D/6E)
+15:30 - 16:30 (樂動)Yr2 - 小號b (6/F活動中心/工藝室/6D/6E)
+15:30 - 16:30 P4奧數 (Rm501)
+15:30 - 16:30 P5奧數 (Rm502)
+15:30 - 16:30 P6奧數 (Rm503)
+15:30 - 16:30 幼童軍 (Rm504)
+15:30 - 16:30 紅十字 (Rm505)
+15:30 - 17:00 高級組合唱團 (3/F音樂室)
+15:30 - 17:00 小女童軍 (Rm205)
+15:30 - 17:30 P1小型網球隊 (2/F禮堂)
+15:30 - 17:30 乒乓球隊 (6/F學生活動中心)
+15:30 - 17:30 足球隊 (籃球埸)
+15:30 - 17:30 排球隊 (籃球埸)
+
+2026-09-25
+14:40 - 15:40 大小肌訓練班 (401)
+14:40 - 15:40 小三小四英文讀寫基礎班 (402)
+14:40 - 15:40 無火煮食初班 (403)
+14:40 - 15:40 無火煮食進階班 (404)
+14:40 - 15:40 六色積木體應用與體驗訓練初班 (406)
+14:40 - 16:40 手鈴隊 (3/F音樂室)
+14:40 - 16:40 手鐘隊 (3/F圖書館)
+14:40 - 16:40 Starlit Hill Band (6/F學生活動中心)
+14:40 - 16:40 高級組中國鼓 (大禮堂)
+14:45 - 15:45 (樂動)Yr1 - 小號a (6/F 全層)
+14:45 - 15:45 (樂動)Yr1 - 上低音號a (6/F 全層)
+14:45 - 15:45 (樂動)Yr1 - 圓號a (6/F 全層)
+14:45 - 15:45 (樂動)Yr2 - 大號a (6/F活動中心/工藝室/6D/6E)
+14:45 - 15:45 (樂動)Yr2 - 小號a (6/F活動中心/工藝室/6D/6E)
+14:45 - 15:45 (樂動)Yr2 - 長號 (6/F活動中心/工藝室/6D/6E)
+14:45 - 15:45 (樂動)Yr2 - 圓號a (6/F活動中心/工藝室/6D/6E)
+14:45 - 16:15 非華語中文班 (Rm605)
+15:45 - 17:00 手球隊 (籃球場)
+16:00 - 17:00 (樂動)Yr1 - 小號b (6/F 全層)
+16:00 - 17:00 (樂動)Yr1 - 上低音號b (6/F 全層)
+16:00 - 17:00 (樂動)Yr1 - 長號 (6/F 全層)
+16:00 - 17:00 (樂動)Yr1 - 圓號b (6/F 全層)
+16:00 - 17:00 (樂動)Yr2 - 大號b (6/F活動中心/工藝室/6D/6E)
+16:00 - 17:00 (樂動)Yr2 - 小號b (6/F活動中心/工藝室/6D/6E)
+16:00 - 17:00 (樂動)Yr2 - 圓號b (6/F活動中心/工藝室/6D/6E)
+
+2026-09-28
+15:25 - 16:30 英文精進班 (六年級) (501)
+15:25 - 16:30 英文提升班 (三年級) (502)
+15:25 - 16:30 英文提升班 (四年級) (503)
+15:25 - 16:30 英文提升班 (五年級) (504)
+15:25 - 16:30 英文提升班 (六年級) (505)
+15:30 - 16:30 小一中文讀寫基礎班 (401)
+15:30 - 16:30 音樂治療學生小組 (輔導室)
+15:30 - 16:30 社交學堂初班 (402)
+15:30 - 16:30 小三小四數學思維基礎訓練班 (403)
+15:30 - 16:30 雜耍校隊 (404)
+15:30 - 16:30 雜耍表演訓練班 (405)
+15:30 - 16:30 普通話小精英 (605)
+15:30 - 17:00 視藝小精英 1 (4/F視藝室)
+15:30 - 17:00 視藝小精英 2 (6/F工藝室)
+15:30 - 17:00 花式跳繩 (6/F學生活動中心)
+15:30 - 17:00 運動拔尖 (跑道)
+15:30 - 17:30 排球隊 (籃球埸)
+15:30 - 17:30 羽毛球隊 (雨天操場/大禮堂)
+
+2026-09-29
+15:25 - 16:30 中文提升班 (三年級) (601)
+15:25 - 16:30 中文提升班 (四年級) (602)
+15:25 - 16:30 中文提升班 (五年級) (603)
+15:25 - 16:30 中文提升班 (六年級) (604)
+15:30 - 16:30 小三歷奇學生小組 (活動室)
+15:30 - 16:30 小二中文基礎中文讀寫班 (401)
+15:30 - 16:30 小一小二數學思維基礎訓練班 (402)
+15:30 - 16:30 專注訓練初組 (403)
+15:30 - 16:30 「生命知旅」生涯規劃訓練課程 (404)
+15:30 - 16:30 小五小六數學思維基礎訓練班 (405)
+15:30 - 16:30 STEAMER (5/F電腦室)
+15:30 - 17:00 中國舞 (2/F禮堂)
+15:30 - 17:30 手鈴板A隊 (3/F音樂室)
+15:30 - 17:30 足球隊 (籃球埸)
+15:30 - 17:30 手球隊 (籃球場)
+
+2026-09-30
+15:25 - 16:30 數學提升班 (三年級) (603)
+15:25 - 16:30 數學提升班 (五年級) (604)
+15:30 - 16:30 小一小二個人執行能力及專注力學生小組 (輔導室)
+15:30 - 16:30 小四歷奇學生小組 (活動室)
+15:30 - 16:30 科學小先鋒 (1/F常識室)
+15:30 - 16:30 小一小二英文讀寫基礎班 (401)
+15:30 - 16:30 專注訓練進階班 (402)
+15:30 - 16:30 魔術表演初班 (403)
+15:30 - 16:30 小五小六英文讀寫支援班 (404)
+15:30 - 16:30 六色積木體應用與體驗訓練進階班 (406)
+15:30 - 16:30 校園電視台 (5/F電腦室)
+15:30 - 16:30 基督小精兵 (G/F小禮堂)
+15:30 - 16:30 English Ambassadors (Rm205)
+15:30 - 17:00 集誦語文小菁英 (Rm603/604)
+15:30 - 17:00 非華語中文班 (Rm605)
+15:30 - 17:30 手鈴板B隊 (3/F音樂室)
+15:30 - 17:30 閃避球隊 (籃球埸)
+15:30 - 17:30 羽毛球隊 (雨天操場/大禮堂)
+15:30 - 17:30 田徑隊 (雨天操場/跑道/運動場)
+`;
+
+    function parseCalendarCsv(rawText) {
+      const lines = rawText.split('\n');
+      let curDate = '';
+      const result = [];
+      let counter = 1;
+
+      for (let rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(line)) {
+          curDate = line;
+          continue;
+        }
+        if (!curDate) continue;
+
+        const timeMatch = line.match(/^(\d{1,2}:\d{2})\s*[-~至到]\s*(\d{1,2}:\d{2})\s+(.+)$/);
+        if (timeMatch) {
+          const startTime = timeMatch[1].padStart(5, '0');
+          const endTime = timeMatch[2].padStart(5, '0');
+          const rest = timeMatch[3].trim();
+
+          let name = rest;
+          let room = "課室";
+
+          const roomMatch = rest.match(/^(.*?)(?:\s*\(([^()]+)\))$/);
+          if (roomMatch) {
+            name = roomMatch[1].trim();
+            room = roomMatch[2].trim();
+          }
+
+          const isAct = /(隊|校隊|合唱團|鼓|樂隊|樂動|童軍|紅十字|跳繩|舞|拔尖|Band|精兵|Ambassador|小先鋒)/i.test(name);
+
+          result.push({
+            id: `cal-${curDate}-${counter++}`,
+            date: curDate,
+            name: name,
+            category: isAct ? "活動" : "學會",
+            startTime: startTime,
+            endTime: endTime,
+            timeRange: `${startTime} - ${endTime}`,
+            room: room,
+            present: 10,
+            total: 10,
+            status: "已點名"
+          });
+        }
+      }
+      return result;
+    }
+
+    const DEFAULT_DATA = parseCalendarCsv(RAW_CALENDAR_CSV);
     let activities = [];
     let currentCategory = "學會";
     let currentDate = "2026-09-22";
@@ -787,7 +765,6 @@
         try {
           const records = await window.sayoDb.getAll("activity_sync_records");
           if (Array.isArray(records) && records.length > 0) {
-            // Sort by updatedAt descending
             records.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
             const latest = records[0];
             if (latest && latest.dataJson) {
@@ -804,34 +781,18 @@
         }
       }
 
-      // 2. Fallback to Local Storage bridge if cloud had no records yet
+      // 2. Load latest calendar schedule data
       if (!loadedFromCloud) {
-        try {
-          let localSaved = null;
-          if (window.sayoStorage) {
-            localSaved = await window.sayoStorage.getItem("eclass_activities_data");
-          } else {
-            localSaved = localStorage.getItem("eclass_activities_data");
-          }
-
-          if (localSaved) {
-            const parsedLocal = JSON.parse(localSaved);
-            // Ensure 2026-09-22 items exist even if an older cache was loaded
-            const has22 = parsedLocal.some(a => a.date === "2026-09-22");
-            if (has22) {
-              activities = parsedLocal;
-            } else {
-              activities = [...DEFAULT_DATA.filter(d => d.date === "2026-09-22"), ...parsedLocal];
-            }
-          } else {
-            activities = [...DEFAULT_DATA];
-          }
-        } catch (e) {
-          activities = [...DEFAULT_DATA];
-        }
-
-        // Push default data to cloud so other devices immediately see it
+        activities = [...DEFAULT_DATA];
         await saveCloudData(false);
+      } else {
+        // Merge missing dates/activities from calendar into activities
+        const existingKeys = new Set(activities.map(a => `${a.date}-${a.name}`));
+        const missing = DEFAULT_DATA.filter(d => !existingKeys.has(`${d.date}-${d.name}`));
+        if (missing.length > 0) {
+          activities = [...activities, ...missing];
+          await saveCloudData(false);
+        }
       }
 
       setSyncStatus('success', '已同步');
@@ -996,7 +957,27 @@
 
     function onDateChange(val) {
       currentDate = val;
+      updateQuickPillState(val);
       renderList();
+    }
+
+    function quickSetDate(val) {
+      const picker = document.getElementById('date-picker');
+      if (picker) picker.value = val;
+      onDateChange(val);
+    }
+
+    function updateQuickPillState(activeDate) {
+      const dates = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-18', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-28', '2026-09-29', '2026-09-30'];
+      dates.forEach(d => {
+        const el = document.getElementById(`pill-${d}`);
+        if (!el) return;
+        if (d === activeDate) {
+          el.className = "px-2 py-0.5 rounded-full transition whitespace-nowrap bg-blue-50 text-[#267fe8] font-semibold border border-blue-200 shadow-2xs";
+        } else {
+          el.className = "px-2 py-0.5 rounded-full transition whitespace-nowrap hover:bg-slate-100 border border-slate-200 text-slate-600";
+        }
+      });
     }
 
     // Render Table
