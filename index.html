@@ -52,11 +52,11 @@
       </div>
 
       <div class="flex items-center space-x-2">
-        <!-- 3-Step Proportional Zoom Controls (等比例放大3級) -->
+        <!-- 3-Step Proportional Zoom Controls (預設 1.9x) -->
         <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold select-none" title="等比例字體畫面縮放 (3段)">
-          <button id="zoom-1-btn" onclick="setZoomLevel(1)" class="px-2 py-1 rounded-md transition bg-white text-[#009b9e] shadow-2xs font-bold">1x</button>
-          <button id="zoom-2-btn" onclick="setZoomLevel(1.3)" class="px-2 py-1 rounded-md transition text-slate-600 hover:text-slate-900">1.3x</button>
-          <button id="zoom-3-btn" onclick="setZoomLevel(1.6)" class="px-2 py-1 rounded-md transition text-slate-600 hover:text-slate-900">1.6x</button>
+          <button id="zoom-1-btn" onclick="setZoomLevel(1)" class="px-2 py-1 rounded-md transition text-slate-600 hover:text-slate-900">1x</button>
+          <button id="zoom-2-btn" onclick="setZoomLevel(1.4)" class="px-2 py-1 rounded-md transition text-slate-600 hover:text-slate-900">1.4x</button>
+          <button id="zoom-3-btn" onclick="setZoomLevel(1.9)" class="px-2 py-1 rounded-md transition bg-white text-[#009b9e] shadow-2xs font-bold">1.9x</button>
         </div>
 
         <button onclick="openAddItemModal()" title="新增活動" class="px-2.5 py-1 rounded-lg border border-teal-200 text-teal-700 bg-teal-50/60 hover:bg-teal-100 transition text-xs font-medium flex items-center gap-1 shadow-2xs">
@@ -467,9 +467,9 @@
     let activities = [];
     let currentDate = "2026-09-22";
     let filterMode = "today"; // 'today' or 'all'
-    let currentZoom = 1; // 1, 1.3, 1.6
+    let currentZoom = 1.9; // 預設 1.9x
 
-    // 等比例放大 3 部 (1x, 1.3x, 1.6x)
+    // 等比例縮放控制 (1x, 1.4x, 1.9x)
     function setZoomLevel(level) {
       currentZoom = level;
       try {
@@ -480,12 +480,13 @@
         }
       } catch (e) {}
 
-      // Apply proportional zoom to document root / body
+      // Apply proportional zoom to document body
       document.body.style.zoom = level;
 
       // Update button highlights
-      [1, 1.3, 1.6].forEach(lvl => {
-        const btnId = lvl === 1 ? 'zoom-1-btn' : (lvl === 1.3 ? 'zoom-2-btn' : 'zoom-3-btn');
+      const levels = [1, 1.4, 1.9];
+      levels.forEach(lvl => {
+        const btnId = lvl === 1 ? 'zoom-1-btn' : (lvl === 1.4 ? 'zoom-2-btn' : 'zoom-3-btn');
         const btn = document.getElementById(btnId);
         if (!btn) return;
         if (Math.abs(lvl - level) < 0.05) {
@@ -503,11 +504,14 @@
           : localStorage.getItem("ui_zoom_level");
         if (saved) {
           const val = parseFloat(saved);
-          if (val && [1, 1.3, 1.6].some(v => Math.abs(v - val) < 0.05)) {
+          if (val && [1, 1.4, 1.9].some(v => Math.abs(v - val) < 0.05)) {
             setZoomLevel(val);
+            return;
           }
         }
       } catch (e) {}
+      // 預設為 1.9x 比例
+      setZoomLevel(1.9);
     }
 
     // Auto-scroll variables
