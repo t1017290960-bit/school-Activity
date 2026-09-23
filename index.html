@@ -43,12 +43,17 @@
     
     <!-- Header Bar -->
     <header class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-20 shadow-xs">
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-2.5">
         <i class="fa-regular fa-calendar-days text-[#009b9e] text-xl"></i>
         <h1 class="text-lg font-bold tracking-tight text-slate-800">每日課外活動</h1>
         <span id="activity-count-badge" class="text-xs bg-[#e6f7f7] text-[#009b9e] font-semibold px-2.5 py-0.5 rounded-full border border-teal-200">
           共 14 項
         </span>
+        <!-- Live Realtime Clock Badge -->
+        <div class="hidden sm:flex items-center space-x-1.5 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-mono text-emerald-800 shadow-2xs" title="實時系統時間">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span id="live-clock" class="font-bold">--:--:--</span>
+        </div>
       </div>
 
       <div class="flex items-center space-x-2">
@@ -567,8 +572,10 @@
         }
       }
 
+      autoCheckAndUpdateToday();
       render();
       await loadSavedZoom();
+      startLiveClock();
       // 開啟時自動平滑滾動，無需額外手動點擊
       setTimeout(() => {
         startAutoScroll();
@@ -639,17 +646,23 @@
         const barColor = isClub ? 'bg-[#009b9e]' : 'bg-amber-500';
         const dotColor = isClub ? 'bg-[#009b9e] ring-teal-100' : 'bg-amber-500 ring-amber-100';
 
+        // 實時進行中判斷 (Real-time in progress)
+        const isLiveNow = checkIsLiveNow(item);
+        const liveBadge = isLiveNow 
+          ? `<span class="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 text-[11px] font-bold animate-pulse shadow-2xs"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>現正進行中</span>`
+          : '';
+
         return `
-          <div onclick="openEditItemModal('${item.id}')" class="flex items-stretch space-x-3.5 relative cursor-pointer group">
+          <div onclick="openEditItemModal('${item.id}')" class="flex items-stretch space-x-3.5 relative cursor-pointer group ${isLiveNow ? 'ring-2 ring-emerald-400 rounded-xl' : ''}">
             
             <!-- Left Vertical Timeline Indicator -->
             <div class="flex flex-col items-center pt-3.5 pl-0.5">
-              <div class="w-3.5 h-3.5 rounded-full ${dotColor} ring-4 z-10 transition-transform group-hover:scale-110 shadow-2xs"></div>
+              <div class="w-3.5 h-3.5 rounded-full ${isLiveNow ? 'bg-emerald-500 ring-emerald-200' : dotColor} ring-4 z-10 transition-transform group-hover:scale-110 shadow-2xs"></div>
               <div class="w-0.5 bg-slate-200 flex-1 -mt-1 -mb-1"></div>
             </div>
 
             <!-- Main White Card (Original Proportions) -->
-            <div class="flex-1 bg-white border border-slate-200/80 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 transition-all flex overflow-hidden">
+            <div class="flex-1 bg-white border ${isLiveNow ? 'border-emerald-300' : 'border-slate-200/80'} rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 transition-all flex overflow-hidden">
               <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
                 
                 <div class="flex items-start space-x-4">
@@ -661,9 +674,12 @@
 
                   <!-- Title & Badges -->
                   <div class="flex-1 min-w-0">
-                    <h3 class="text-base sm:text-[17px] font-bold text-slate-800 leading-snug group-hover:text-[#009b9e] transition">
-                      ${escapeHtml(item.name)}
-                    </h3>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h3 class="text-base sm:text-[17px] font-bold text-slate-800 leading-snug group-hover:text-[#009b9e] transition">
+                        ${escapeHtml(item.name)}
+                      </h3>
+                      ${liveBadge}
+                    </div>
 
                     <!-- Details Row -->
                     <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 mt-2">
@@ -685,12 +701,65 @@
               </div>
 
               <!-- Right Vertical Colored Border Indicator -->
-              <div class="w-2.5 ${barColor} shrink-0 self-stretch rounded-r-xl"></div>
+              <div class="w-2.5 ${isLiveNow ? 'bg-emerald-500' : barColor} shrink-0 self-stretch rounded-r-xl"></div>
             </div>
 
           </div>
         `;
       }).join('');
+    }
+
+    // 實時時鐘與日期工具
+    function getTodayRealDate() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getNowTimeString() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      return `${h}:${min}`;
+    }
+
+    function checkIsLiveNow(item) {
+      const todayStr = getTodayRealDate();
+      if (item.date !== todayStr && item.date !== currentDate) return false;
+      const curTime = getNowTimeString();
+      return (curTime >= (item.startTime || '00:00') && curTime <= (item.endTime || '23:59'));
+    }
+
+    function startLiveClock() {
+      function tick() {
+        const now = new Date();
+        const clockEl = document.getElementById('live-clock');
+        if (clockEl) {
+          clockEl.textContent = now.toLocaleTimeString('zh-HK', { hour12: false });
+        }
+      }
+      tick();
+      setInterval(tick, 1000);
+      // 自動定時檢查跨日及活動進行中狀態
+      setInterval(() => {
+        autoCheckAndUpdateToday();
+        if (!isAutoScrolling) render();
+      }, 30000);
+    }
+
+    // 自動偵測今日日期，無需額外手動按鈕
+    function autoCheckAndUpdateToday() {
+      const realToday = getTodayRealDate();
+      const hasTodayActivities = activities.some(a => a.date === realToday);
+      if (hasTodayActivities && currentDate !== realToday) {
+        currentDate = realToday;
+        const input = document.getElementById('date-input');
+        if (input) input.value = realToday;
+        updateQuickDatePills(realToday);
+        render();
+      }
     }
 
     function onDateChanged(newDate) {
