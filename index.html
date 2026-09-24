@@ -36,7 +36,7 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 w-full h-screen text-slate-800 antialiased selection:bg-teal-100 p-0 m-0 overflow-hidden" style="zoom: 2.2;">
+<body class="bg-slate-100 w-full h-screen text-slate-800 antialiased selection:bg-teal-100 p-0 m-0 overflow-hidden" style="zoom: 2.0;">
 
   <!-- Main View Card Container (Expanded to Full Screen) -->
   <div class="w-full h-full bg-white flex flex-col overflow-hidden relative">
@@ -460,9 +460,9 @@
     let activities = [];
     let currentDate = "2026-09-22";
     let filterMode = "today"; // 'today' or 'all'
-    let currentZoom = 2.2; // 預設 2.2x 比例
+    let currentZoom = 2.0; // 預設 2.0x 比例
 
-    function applyZoom(level = 2.2) {
+    function applyZoom(level = 2.0) {
       currentZoom = level;
       document.body.style.zoom = level;
     }
@@ -524,7 +524,7 @@
 
       autoCheckAndUpdateToday();
       render();
-      applyZoom(2.2);
+      applyZoom(2.0);
       startLiveClock();
       // 開啟時自動平滑滾動，無需額外手動點擊
       setTimeout(() => {
