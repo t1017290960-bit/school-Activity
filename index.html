@@ -467,11 +467,13 @@
       document.body.style.zoom = level;
     }
 
-    // Auto-scroll variables
+    // Auto-scroll variables (requestAnimationFrame 頂級流暢滾動)
     let isAutoScrolling = false;
-    let autoScrollInterval = null;
+    let autoScrollRafId = null;
     let scrollDirection = "down";
     let scrollPauseTimer = null;
+    let lastRafTime = 0;
+    let currentScrollPos = 0;
 
     async function init() {
       // 1. Load from platform database if exists
@@ -636,11 +638,6 @@
                         <span>${escapeHtml(item.room || '課室')}</span>
                       </span>
 
-                      <span class="inline-flex items-center gap-1 text-slate-400 font-normal font-mono">
-                        <i class="fa-regular fa-clock text-[11px]"></i>
-                        <span>${escapeHtml(item.startTime)} - ${escapeHtml(item.endTime)}</span>
-                      </span>
-
                       ${filterMode === 'all' && item.date ? `<span class="text-blue-500 font-mono text-[11px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">${item.date}</span>` : ''}
                     </div>
                   </div>
@@ -751,7 +748,7 @@
       render();
     }
 
-    // Auto-scroll loop
+    // Auto-scroll loop (使用 requestAnimationFrame 達到極致高幀率流暢滾動)
     function toggleAutoScroll() {
       if (isAutoScrolling) {
         stopAutoScroll();
@@ -765,6 +762,7 @@
       if (!container) return;
       isAutoScrolling = true;
       scrollDirection = 'down';
+      currentScrollPos = container.scrollTop;
 
       const btn = document.getElementById('autoscroll-btn');
       const icon = document.getElementById('autoscroll-icon');
@@ -776,55 +774,67 @@
       if (icon) icon.className = "fa-solid fa-pause text-[9px]";
       if (text) text.textContent = "暫停滾動";
 
-      runAutoScrollStep();
+      lastRafTime = performance.now();
+      cancelAnimationFrame(autoScrollRafId);
+      clearTimeout(scrollPauseTimer);
+      autoScrollRafId = requestAnimationFrame(autoScrollStepRaf);
     }
 
-    function runAutoScrollStep() {
-      clearInterval(autoScrollInterval);
-      clearTimeout(scrollPauseTimer);
-
+    function autoScrollStepRaf(now) {
+      if (!isAutoScrolling) return;
       const container = document.getElementById('activity-container');
       if (!container) return;
 
-      autoScrollInterval = setInterval(() => {
-        if (!isAutoScrolling || !container) return;
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      if (maxScroll <= 0) {
+        autoScrollRafId = requestAnimationFrame(autoScrollStepRaf);
+        return;
+      }
 
-        const maxScroll = container.scrollHeight - container.clientHeight;
-        if (maxScroll <= 0) return;
+      const deltaMs = Math.min(now - lastRafTime, 50);
+      lastRafTime = now;
 
-        const speed = 1.3;
+      // 穩定流暢速度 (約 38px/s，支援高刷螢幕)
+      const pixelsPerSec = 38;
+      const step = (pixelsPerSec * deltaMs) / 1000;
 
-        if (scrollDirection === 'down') {
-          if (container.scrollTop >= maxScroll - 2) {
-            clearInterval(autoScrollInterval);
-            scrollPauseTimer = setTimeout(() => {
-              if (!isAutoScrolling) return;
-              scrollDirection = 'up';
-              runAutoScrollStep();
-            }, 1800);
-          } else {
-            container.scrollTop += speed;
-          }
-        } else {
-          if (container.scrollTop <= 2) {
-            clearInterval(autoScrollInterval);
-            scrollPauseTimer = setTimeout(() => {
-              if (!isAutoScrolling) return;
-              scrollDirection = 'down';
-              runAutoScrollStep();
-            }, 1800);
-          } else {
-            container.scrollTop -= speed;
-          }
+      if (scrollDirection === 'down') {
+        currentScrollPos += step;
+        if (currentScrollPos >= maxScroll - 1) {
+          currentScrollPos = maxScroll;
+          container.scrollTop = maxScroll;
+          scrollPauseTimer = setTimeout(() => {
+            if (!isAutoScrolling) return;
+            scrollDirection = 'up';
+            lastRafTime = performance.now();
+            autoScrollRafId = requestAnimationFrame(autoScrollStepRaf);
+          }, 1800);
+          return;
         }
-      }, 25);
+      } else {
+        currentScrollPos -= step;
+        if (currentScrollPos <= 1) {
+          currentScrollPos = 0;
+          container.scrollTop = 0;
+          scrollPauseTimer = setTimeout(() => {
+            if (!isAutoScrolling) return;
+            scrollDirection = 'down';
+            lastRafTime = performance.now();
+            autoScrollRafId = requestAnimationFrame(autoScrollStepRaf);
+          }, 1800);
+          return;
+        }
+      }
+
+      container.scrollTop = currentScrollPos;
+      autoScrollRafId = requestAnimationFrame(autoScrollStepRaf);
     }
 
     function stopAutoScroll() {
       isAutoScrolling = false;
-      clearInterval(autoScrollInterval);
+      cancelAnimationFrame(autoScrollRafId);
       clearTimeout(scrollPauseTimer);
-      autoScrollInterval = null;
+      autoScrollRafId = null;
       scrollPauseTimer = null;
 
       const btn = document.getElementById('autoscroll-btn');
