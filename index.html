@@ -606,39 +606,35 @@
           <div onclick="openEditItemModal('${item.id}')" class="flex items-stretch space-x-3.5 relative cursor-pointer group ${isLiveNow ? 'ring-2 ring-emerald-400 rounded-xl' : ''}">
             
             <!-- Left Vertical Timeline Indicator -->
-            <div class="flex flex-col items-center pt-3.5 pl-0.5">
+            <div class="flex flex-col items-center pt-4 pl-0.5">
               <div class="w-3.5 h-3.5 rounded-full ${isLiveNow ? 'bg-emerald-500 ring-emerald-200' : dotColor} ring-4 z-10 transition-transform group-hover:scale-110 shadow-2xs"></div>
               <div class="w-0.5 bg-slate-200 flex-1 -mt-1 -mb-1"></div>
             </div>
 
-            <!-- Main White Card (Original Proportions) -->
+            <!-- Main White Card -->
             <div class="flex-1 bg-white border ${isLiveNow ? 'border-emerald-300' : 'border-slate-200/80'} rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 transition-all flex overflow-hidden">
-              <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
+              <div class="p-3 sm:p-4 flex-1 flex items-center justify-between">
                 
-                <div class="flex items-start space-x-4">
-                  <!-- Start & End Time Box -->
-                  <div class="text-sm sm:text-base font-bold text-slate-800 font-mono leading-tight whitespace-nowrap pt-0.5 text-center min-w-[50px]">
-                    <div>${escapeHtml(item.startTime || '15:25')}</div>
-                    <div class="text-slate-400 text-xs font-normal mt-0.5">${escapeHtml(item.endTime || '16:30')}</div>
+                <div class="flex items-center space-x-4 w-full">
+                  <!-- Time & Location Box (放在一起) -->
+                  <div class="flex flex-col items-center justify-center font-mono min-w-[70px] sm:min-w-[85px] shrink-0 text-center pr-3 border-r border-slate-100/90">
+                    <div class="text-base sm:text-lg font-black text-slate-800 leading-tight">${escapeHtml(item.startTime || '15:25')}</div>
+                    <div class="text-xs sm:text-sm text-slate-400 font-semibold mt-0.5">${escapeHtml(item.endTime || '16:30')}</div>
+                    <!-- 地點與時間放在同一區塊 -->
+                    <div class="mt-1.5 inline-flex items-center gap-1 bg-slate-50 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 text-xs font-bold font-mono">
+                      <i class="fa-solid fa-location-dot text-[#009b9e] text-[11px]"></i>
+                      <span>${escapeHtml(item.room || '課室')}</span>
+                    </div>
                   </div>
 
-                  <!-- Title & Badges -->
-                  <div class="flex-1 min-w-0">
+                  <!-- Title (文字放大佔滿整個欄) -->
+                  <div class="flex-1 min-w-0 pl-1 sm:pl-2">
                     <div class="flex items-center gap-2 flex-wrap">
-                      <h3 class="text-base sm:text-[17px] font-bold text-slate-800 leading-snug group-hover:text-[#009b9e] transition">
+                      <h3 class="text-lg sm:text-2xl font-bold text-slate-800 leading-snug group-hover:text-[#009b9e] transition">
                         ${escapeHtml(item.name)}
                       </h3>
                       ${liveBadge}
-                    </div>
-
-                    <!-- Details Row -->
-                    <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 mt-2">
-                      <span class="inline-flex items-center gap-1 text-slate-700 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-200/90 font-mono">
-                        <i class="fa-solid fa-location-dot text-[#009b9e] text-xs"></i>
-                        <span>${escapeHtml(item.room || '課室')}</span>
-                      </span>
-
-                      ${filterMode === 'all' && item.date ? `<span class="text-blue-500 font-mono text-[11px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">${item.date}</span>` : ''}
+                      ${filterMode === 'all' && item.date ? `<span class="text-blue-500 font-mono text-xs bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-medium">${item.date}</span>` : ''}
                     </div>
                   </div>
                 </div>
