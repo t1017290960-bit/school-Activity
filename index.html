@@ -125,6 +125,7 @@
       </div>
       <span class="text-xs text-slate-400 font-normal">點擊活動可查看或編輯</span>
     </footer>
+    <div id="save-toast" class="hidden absolute bottom-16 left-1/2 -translate-x-1/2 z-40 px-3 py-2 rounded-lg text-white text-xs shadow-lg"></div>
 
   </div>
 
@@ -455,7 +456,84 @@
       return list;
     }
 
-    const INITIAL_ACTIVITIES = parseCalendar(RAW_CALENDAR_TEXT);
+    function makeOctoberActivities(dates, rows) {
+      return dates.flatMap(date => rows.map(([startTime, endTime, name, room]) => ({
+        id: `oct-${date}-${name}`,
+        date, name, startTime, endTime, room: room || "課室",
+        category: /(隊|校隊|球|鼓|樂隊|樂動|童軍|紅十字|跳繩|舞|拔尖|Band|Kpop|精兵|Ambassador|小先鋒|表演生|鈴)/i.test(name) ? "活動" : "學會"
+      })));
+    }
+
+    const OCTOBER_ACTIVITIES = [
+      ...makeOctoberActivities(['2026-10-05','2026-10-12','2026-10-26'], [
+        ['15:25','16:30','英文精進班 (六年級)','501'],
+        ['15:25','16:30','英文提升班 (三年級)','502'],
+        ['15:25','16:30','英文提升班 (四年級)','503'],
+        ['15:25','16:30','英文提升班 (五年級)','504']
+      ]),
+      ...makeOctoberActivities(['2026-10-06','2026-10-13','2026-10-20','2026-10-27'], [
+        ['15:25','16:30','中文提升班 (三年級)','601'],
+        ['15:25','16:30','中文提升班 (四年級)','602'],
+        ['15:25','16:30','中文提升班 (五年級)','603'],
+        ['15:25','16:30','中文提升班 (六年級)','604']
+      ]),
+      ...makeOctoberActivities(['2026-10-07'], [
+        ['15:25','16:30','數學提升班 (三年級)','603'],
+        ['15:25','16:30','數學提升班 (五年級)','604'],
+        ['15:30','16:30','小一小二個人執行能力及專注力學生小組','輔導室'],
+        ['15:30','16:30','小四歷奇學生小組','活動室']
+      ]),
+      ...makeOctoberActivities(['2026-10-14','2026-10-21','2026-10-28'], [
+        ['15:25','16:30','數學提升班 (三年級)','603'],
+        ['15:25','16:30','數學提升班 (五年級)','604'],
+        ['15:30','16:30','Kpop','課室'],
+        ['15:30','16:30','小一小二個人執行能力及專注力學生小組','輔導室']
+      ]),
+      ...makeOctoberActivities(['2026-10-08','2026-10-15','2026-10-22'], [
+        ['14:15','15:15','(樂動)Yr2 - 大號a','6/F活動中心/工藝室/6D/6E'],
+        ['14:15','15:15','(樂動)Yr2 - 大號b','6/F活動中心/工藝室/6D/6E'],
+        ['14:15','15:15','(樂動)Yr2 - 長號','6/F活動中心/工藝室/6D/6E']
+      ]),
+      ...makeOctoberActivities(['2026-10-09','2026-10-16','2026-10-23'], [
+        ['14:40','15:40','大小肌訓練班','401'],
+        ['14:40','15:40','小三小四中文讀寫基礎班','402'],
+        ['14:40','15:40','無火煮食初班','403'],
+        ['14:40','15:40','無火煮食進階班','404']
+      ]),
+      ...makeOctoberActivities(['2026-10-03'], [
+        ['08:30','10:30','P2P3小型網球隊','2/F禮堂'],
+        ['10:00','12:00','田徑隊','雨天操場/跑道/運動場'],
+        ['10:45','12:45','乒乓球隊','6/F學生活動中心']
+      ]),
+      ...makeOctoberActivities(['2026-10-17','2026-10-24'], [
+        ['00:00','02:00','手鈴板興趣班','課室'],
+        ['08:30','10:30','P2P3小型網球隊','2/F禮堂'],
+        ['09:00','10:00','籃球A班初小','課室'],
+        ['09:00','10:00','中文故事書冊創作班','課室'],
+        ['09:00','10:00','中文創意書冊創作班','課室']
+      ])
+    ];
+
+    const INITIAL_ACTIVITIES = [...parseCalendar(RAW_CALENDAR_TEXT), ...OCTOBER_ACTIVITIES];
+
+    function addOctoberQuickDates() {
+      const first = document.querySelector('.quick-date-btn');
+      const bar = first && first.parentElement;
+      if (!bar) return;
+      const existing = new Set([...bar.querySelectorAll('.quick-date-btn')].map(b => b.dataset.date));
+      const weekdays = ['日','一','二','三','四','五','六'];
+      [...new Set(OCTOBER_ACTIVITIES.map(a => a.date))].sort().forEach(date => {
+        if (existing.has(date)) return;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'quick-date-btn px-2 py-0.5 rounded-full transition whitespace-nowrap border border-slate-200 text-slate-600 hover:bg-slate-100';
+        button.dataset.date = date;
+        button.textContent = `10/${Number(date.slice(8,10))} (${weekdays[new Date(date + 'T12:00:00').getDay()]})`;
+        button.onclick = () => quickSelectDate(date);
+        bar.appendChild(button);
+      });
+      updateQuickDatePills(currentDate);
+    }
 
     let activities = [];
     let currentDate = "2026-09-22";
@@ -522,43 +600,49 @@
         }
       }
 
-      autoCheckAndUpdateToday();
+      addOctoberQuickDates();
       render();
-      applyZoom(2.0);
-      startLiveClock();
-      // 開啟時自動平滑滾動，無需額外手動點擊
-      setTimeout(() => {
-        startAutoScroll();
-      }, 600);
+    }
+
+    function showSaveToast(message, success = true) {
+      const toast = document.getElementById('save-toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = `absolute bottom-16 left-1/2 -translate-x-1/2 z-40 px-3 py-2 rounded-lg text-white text-xs shadow-lg ${success ? 'bg-emerald-600' : 'bg-rose-600'}`;
+      setTimeout(() => toast.classList.add('hidden'), 3000);
     }
 
     async function persistData() {
-      // Save locally
+      let localSaved = false;
       try {
         const str = JSON.stringify(activities);
-        if (window.sayoStorage) {
-          await window.sayoStorage.setItem("daily_activities", str);
-        } else {
-          localStorage.setItem("daily_activities", str);
-        }
-      } catch (e) {}
+        if (window.sayoStorage) await window.sayoStorage.setItem("daily_activities", str);
+        else localStorage.setItem("daily_activities", str);
+        localSaved = true;
+      } catch (e) {
+        console.error("Local save error:", e);
+      }
 
-      // Save to platform database for teacher review / cross-device sync
       if (window.sayoDb && typeof window.sayoDb.append === 'function') {
         try {
           let authorId = "teacher";
           if (typeof window.sayoDb.getUserId === 'function') {
-            try { authorId = await window.sayoDb.getUserId(); } catch (e) {}
+            try { authorId = await window.sayoDb.getUserId(); } catch (e) { console.warn("Could not retrieve author key:", e); }
           }
-          await window.sayoDb.append("activity_schedule_records", {
+          const result = await window.sayoDb.append("activity_schedule_records", {
             id: 'sync-' + Date.now(),
             dataJson: JSON.stringify(activities),
             authorUserId: authorId,
             updatedAt: new Date().toISOString()
           });
+          if (result && result.ok) showSaveToast('已儲存並同步');
+          else showSaveToast(localSaved ? '本機已儲存；雲端同步失敗' : '儲存失敗，請重試', false);
         } catch (e) {
-          console.warn("Cloud save note:", e);
+          console.error("Cloud save error:", e);
+          showSaveToast(localSaved ? '本機已儲存；雲端同步失敗' : '儲存失敗，請重試', false);
         }
+      } else {
+        showSaveToast(localSaved ? '已儲存在本機' : '儲存失敗，請重試', localSaved);
       }
     }
 
@@ -596,53 +680,37 @@
         const barColor = isClub ? 'bg-[#009b9e]' : 'bg-amber-500';
         const dotColor = isClub ? 'bg-[#009b9e] ring-teal-100' : 'bg-amber-500 ring-amber-100';
 
-        // 實時進行中判斷 (Real-time in progress)
-        const isLiveNow = checkIsLiveNow(item);
-        const liveBadge = isLiveNow 
-          ? `<span class="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 text-[11px] font-bold animate-pulse shadow-2xs"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>現正進行中</span>`
-          : '';
+        // Timeline cards follow the clean reference layout.
 
         return `
-          <div onclick="openEditItemModal('${item.id}')" class="flex items-stretch space-x-3.5 relative cursor-pointer group ${isLiveNow ? 'ring-2 ring-emerald-400 rounded-xl' : ''}">
-            
-            <!-- Left Vertical Timeline Indicator -->
-            <div class="flex flex-col items-center pt-4 pl-0.5">
-              <div class="w-3.5 h-3.5 rounded-full ${isLiveNow ? 'bg-emerald-500 ring-emerald-200' : dotColor} ring-4 z-10 transition-transform group-hover:scale-110 shadow-2xs"></div>
+          <div onclick="openEditItemModal('${item.id}')" class="flex items-stretch space-x-3.5 relative cursor-pointer group">
+            <div class="flex flex-col items-center pt-3.5 pl-0.5">
+              <div class="w-3.5 h-3.5 rounded-full ${dotColor} ring-4 z-10 transition-transform group-hover:scale-110 shadow-2xs"></div>
               <div class="w-0.5 bg-slate-200 flex-1 -mt-1 -mb-1"></div>
             </div>
-
-            <!-- Main White Card -->
-            <div class="flex-1 bg-white border ${isLiveNow ? 'border-emerald-300' : 'border-slate-200/80'} rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 transition-all flex overflow-hidden">
-              <div class="p-3 sm:p-4 flex-1 flex items-center justify-between">
-                
-                <div class="flex items-center space-x-4 w-full">
-                  <!-- Time & Location Box (放在一起) -->
-                  <div class="flex flex-col items-center justify-center font-mono min-w-[70px] sm:min-w-[85px] shrink-0 text-center pr-3 border-r border-slate-100/90">
-                    <div class="text-base sm:text-lg font-black text-slate-800 leading-tight">${escapeHtml(item.startTime || '15:25')}</div>
-                    <div class="text-xs sm:text-sm text-slate-400 font-semibold mt-0.5">${escapeHtml(item.endTime || '16:30')}</div>
-                    <!-- 地點與時間放在同一區塊 -->
-                    <div class="mt-1.5 inline-flex items-center gap-1 bg-slate-50 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 text-xs font-bold font-mono">
-                      <i class="fa-solid fa-location-dot text-[#009b9e] text-[11px]"></i>
-                      <span>${escapeHtml(item.room || '課室')}</span>
-                    </div>
+            <div class="flex-1 bg-white border border-slate-200/90 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 transition-all flex overflow-hidden min-h-[94px]">
+              <div class="px-3.5 sm:px-4 py-3 flex-1 flex items-center">
+                <div class="flex items-start gap-3 w-full">
+                  <div class="shrink-0 w-12 font-mono pt-0.5">
+                    <div class="text-sm font-bold text-slate-800 leading-tight">${escapeHtml(item.startTime || '15:25')}</div>
+                    <div class="text-[11px] text-slate-400 font-semibold mt-1">${escapeHtml(item.endTime || '16:30')}</div>
                   </div>
-
-                  <!-- Title (文字放大佔滿整個欄) -->
-                  <div class="flex-1 min-w-0 pl-1 sm:pl-2">
+                  <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 flex-wrap">
-                      <h3 class="text-lg sm:text-2xl font-bold text-slate-800 leading-snug group-hover:text-[#009b9e] transition">
-                        ${escapeHtml(item.name)}
-                      </h3>
-                      ${liveBadge}
-                      ${filterMode === 'all' && item.date ? `<span class="text-blue-500 font-mono text-xs bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-medium">${item.date}</span>` : ''}
+                      <h3 class="text-base sm:text-lg font-bold text-slate-800 leading-snug group-hover:text-[#009b9e] transition">${escapeHtml(item.name)}</h3>
+                      ${filterMode === 'all' && item.date ? `<span class="text-blue-500 font-mono text-xs bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-medium">${escapeHtml(item.date)}</span>` : ''}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-slate-500 mt-2">
+                      <span class="inline-flex items-center gap-1 bg-slate-50 text-slate-600 px-2 py-0.5 rounded border border-slate-100 font-medium">
+                        <i class="fa-solid fa-location-dot text-[#009b9e] text-xs"></i>
+                        <span>${escapeHtml(item.room || '課室')}</span>
+                      </span>
+                      <span class="text-xs text-slate-400 font-normal"><i class="fa-regular fa-clock text-[11px]"></i> ${escapeHtml(item.startTime || '15:25')} - ${escapeHtml(item.endTime || '16:30')}</span>
                     </div>
                   </div>
                 </div>
-
               </div>
-
-              <!-- Right Vertical Colored Border Indicator -->
-              <div class="w-2.5 ${isLiveNow ? 'bg-emerald-500' : barColor} shrink-0 self-stretch rounded-r-xl"></div>
+              <div class="w-2.5 ${barColor} shrink-0 self-stretch rounded-r-xl"></div>
             </div>
 
           </div>
@@ -705,6 +773,8 @@
 
     function onDateChanged(newDate) {
       currentDate = newDate;
+      const dateLabel = document.getElementById('date-label');
+      if (dateLabel) dateLabel.textContent = newDate;
       updateQuickDatePills(newDate);
       if (filterMode === 'all') {
         setFilterMode('today');
