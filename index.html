@@ -530,12 +530,13 @@
       ])
     ];
 
-    const INITIAL_ACTIVITIES = [...parseCalendar(RAW_CALENDAR_TEXT), ...OCTOBER_ACTIVITIES];
+    const INITIAL_ACTIVITIES = [...OCTOBER_ACTIVITIES];
 
     function addOctoberQuickDates() {
       const first = document.querySelector('.quick-date-btn');
       const bar = first && first.parentElement;
       if (!bar) return;
+      bar.querySelectorAll('.quick-date-btn[data-date^="2026-09-"]').forEach(button => button.remove());
       const existing = new Set([...bar.querySelectorAll('.quick-date-btn')].map(b => b.dataset.date));
       const weekdays = ['日','一','二','三','四','五','六'];
       [...new Set(OCTOBER_ACTIVITIES.map(a => a.date))].sort().forEach(date => {
@@ -616,10 +617,15 @@
         }
       }
 
+      const beforeCleanup = activities.length;
+      activities = activities.filter(a => !String(a.date || '').startsWith('2026-09-'));
+      if (activities.length !== beforeCleanup) await persistData();
+
       const dateInput = document.getElementById('date-input');
       if (dateInput) dateInput.value = currentDate;
       addOctoberQuickDates();
       render();
+      startAutoScroll();
     }
 
     function showSaveToast(message, success = true) {
@@ -1014,8 +1020,9 @@
     async function resetToDefaultData() {
       if (confirm("確定重設為圖片中的 14 項活動日程？")) {
         activities = [...INITIAL_ACTIVITIES];
-        currentDate = "2026-09-22";
+        currentDate = getTodayRealDate();
         document.getElementById('date-input').value = currentDate;
+        updateQuickDatePills(currentDate);
         setFilterMode('today');
         await persistData();
         render();
