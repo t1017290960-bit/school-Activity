@@ -536,7 +536,7 @@
     }
 
     let activities = [];
-    let currentDate = "2026-09-22";
+    let currentDate = getTodayRealDate();
     let filterMode = "today"; // 'today' or 'all'
     let currentZoom = 2.0; // 預設 2.0x 比例
 
@@ -600,6 +600,8 @@
         }
       }
 
+      const dateInput = document.getElementById('date-input');
+      if (dateInput) dateInput.value = currentDate;
       addOctoberQuickDates();
       render();
     }
@@ -720,11 +722,11 @@
 
     // 實時時鐘與日期工具
     function getTodayRealDate() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+      const parts = new Intl.DateTimeFormat('en', {
+        timeZone: 'Asia/Hong_Kong', year: 'numeric', month: '2-digit', day: '2-digit'
+      }).formatToParts(new Date());
+      const part = type => parts.find(p => p.type === type)?.value || '';
+      return `${part('year')}-${part('month')}-${part('day')}`;
     }
 
     function getNowTimeString() {
